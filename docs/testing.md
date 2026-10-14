@@ -12,6 +12,24 @@
 - 静态检查：四个 XR manifest/lock 版本一致；Shared/Avatar 无 XR Hands/NGO 实现依赖；Assets 新增文件/目录均有 Unity 生成的 .meta；MainScene 的源/显示/Camera 输入引用已序列化；缓存/日志/生成 IDE 项目被忽略。
 - 未验证：OpenXR loader/feature 配置、Project Validation、渲染画面、Link 手追踪、Quest 原生手追踪、Android Build、双机网络、Meta SDK。
 
+## 2026-10-14 后续配置记录
+- 开始时分支 `codex/xr-hands-m0` 干净，用户已提交并推送 `641e6f5`；本次继续修改未提交、不 push。
+- Windows 注册表活动 OpenXR runtime 为 Meta Quest Link。ADB 初次设备列表为空，未声称头显已连接或有真实追踪结果。
+- 双平台 OpenXR/Hand Tracking Subsystem 与 Android Meta Quest Support 通过公开 Unity API 配置；MainScene 复用官方 HandVisualizer 的资产引用接入同一 Rig。
+- 配置工具首次编译因遗漏验证 API 编辑器命名空间失败，已修正。第二次运行遇到安装包 Meta 规则跨活动平台空引用，已改为各活动平台独立检查，不修改包、不使用反射。第三次 Standalone 配置/验证退出码 0。
+- StandaloneWindows64 Project Validation：**0 errors，2 optional warnings**，关于 InputSystem.XR.PoseControl 迁移和 StickControl thumbstick 迁移。当前项目不使用这些复合 pose/thumbstick 输入，保留并记录；不是阻止构建/Play 的错误。报告 `Logs/QuestLAN-XRValidation-StandaloneWindows64.txt`。
+- Android 活动目标 Project Validation：**0 errors，4 warnings**。除上述输入迁移之外：SSAO 警告来自仍保留的 PC_Renderer（Android 默认 quality=Mobile，Mobile_Renderer 的 rendererFeatures 为空）；另外推荐 Prioritize Input Polling，当前未启用该可选优化，需后续设备上比较。报告 `Logs/QuestLAN-XRValidation-Android.txt`。
+- Android Development APK：**BuildResult.Succeeded，errors=0，Unity 退出码 0**。产物 `Builds/Android/QuestLANPrototype.apk`，实际 APK 大小 50,242,977 bytes；构建摘要 totalSize 还包含调试符号等，不等于 APK 大小。日志 `Logs/QuestLAN-AndroidBuild.log`。首次包含 Vulkan 着色器、Burst、IL2CPP/ARM64 和 Gradle 打包。
+- 已用 Editor SDK 的 aapt 检查最终 APK：包名 `com.maedalab.questlanprototype`，native-code `arm64-v8a`，minSdk=25、targetSdk=36；包含 `com.oculus.permission.HAND_TRACKING`、可选 `oculus.software.handtracking` 及必需 VR headtracking 声明。生成的 Meta supportedDevices 列表含 Quest 3 标识 eureka。包声明不等于实机运行通过。
+- 用户目前不能连接 Quest 3，仅可提供 Quest 2 / Quest Link；已请求进入有效 PCVR 会话。该路径只能记录 Quest 2 / PCVR 的结果，不能代替 Quest 3 原生、Android 安装、双机或 Quest 3 手追踪验收。
+- 新增并实际运行 `QuestLANLinkProbe`：Windows x64 下菜单 `QuestLAN/Run 90-second Link hardware probe`，打开 MainScene 并采样真实源，日志 `Logs/QuestLAN-LinkProbe.csv` 和 Summary。只有真实源 flags，不生成模拟有效追踪。
+- Quest 实机、视觉效果、左右手丢失恢复、暂停重入仍须设备执行。
+- Quest 2 Link **首轮真实 90 秒采样已运行**：342 次采样，HeadTracked=true 338 次，LeftHandTracked=true 15 次、RightHandTracked=true 15 次。头部 root 相对位置范围 (0.360, 0.174, 0.264) 米。有效手帧出现在约 1.078–5.952 秒，之后双手失效；未把这次短暂有效视为持续手追踪或丢失恢复验收通过。
+- OpenXR 诊断日志明确识别 `System Properties: Oculus Quest2`、Runtime Name `Oculus`，启用了 `XR_EXT_hand_tracking` 和 Hand Tracking Subsystem。该环境确实提供过手帧，后续还需排除控制器/双手切换与追踪条件；画面正确性等待操作者反馈。
+- 本轮实时 Editor 日志包含 Android Extension 的 CancellationTokenSource Dispose 提示及 Unity CoreBusinessMetrics 缓存 SQLite 锁消息，未观察到 QuestLAN 脚本异常。它们不能被解释为网络或手追踪已通过。
+- **操作者另行进入 Play 后确认正常**：Quest 2 / Link 中可见双手骨骼，左手腕为长方体、右手腕为球体。此为真实画面反馈，独立于首轮自动采样结果；该次手动 Play 未运行 probe，不给它虚构采样计数。首次短暂手帧可能与加载/追踪条件有关，但根因尚未确定。已确认基本 PCVR 头/手显示及再次进入 Play；单手遮挡/恢复、应用暂停/恢复和 Quest 3 原生仍未完成专项验收。
+- 构建/打开双平台使 Unity 自动迁移了 Mobile_RPAsset、DefaultVolumeProfile、URP Global Settings，并写入构建着色器过滤/运行时设置；保留引擎生成结果。已还原本次引擎自动启用的 UnityConnect 开关至原值，未引入云服务。Android GameActivity 构建临时目录 `.utmp/` 已加入 gitignore，不提交 APK/符号/原始姿态日志。
+
 ## 轻量自动验证
 PlayMode Test Runner 的 `QuestLAN.Tests` 验证：旋转/平移 AvatarRoot 下重建世界 Pose；左右手 flags 独立；本地头隐藏；无帧时隐藏；无设备不得输出 true；重复读取不增 Sequence；停用失效/重启无帧；缺引用和缩放祖先拒绝采集。TestPoseSource 仅测试 fixture，不提供 B 的网络/模拟实现；测试程序集只在 Test Runner 测试构建中启用，不是正常产品依赖。
 
