@@ -1,0 +1,6 @@
+{
+  "name": "QuestLAN.Networking.Tests",
+  "references": ["QuestLAN.Networking", "QuestLAN.Shared", "Unity.Netcode.Runtime"],
+  "optionalUnityReferences": ["TestAssemblies"],
+  "autoReferenced": false
+}

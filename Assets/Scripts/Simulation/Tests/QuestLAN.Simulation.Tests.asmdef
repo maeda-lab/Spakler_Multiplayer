@@ -1,0 +1,6 @@
+{
+  "name": "QuestLAN.Simulation.Tests",
+  "references": ["QuestLAN.Simulation", "QuestLAN.Shared", "QuestLAN.Avatar"],
+  "optionalUnityReferences": ["TestAssemblies"],
+  "autoReferenced": false
+}
