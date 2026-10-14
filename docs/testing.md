@@ -1,5 +1,7 @@
 # 验证与实际结果
 
+网络合并后的配置故障及修复见 [xr-merge-repair.md](xr-merge-repair.md)。本轮 Unity EditMode 配置/场景回归 **4/4 通过**；真实 Link 复测与 Android 原生结果分别记录。
+
 不得从静态检查推定 Unity 编译、从 Editor 测试推定 Quest 追踪或 LAN 已通过。
 
 ## 2026-10-14 当前记录

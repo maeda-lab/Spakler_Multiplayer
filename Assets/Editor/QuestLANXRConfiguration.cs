@@ -24,23 +24,22 @@ namespace QuestLAN.Editor
 {
     public static class QuestLANXRConfiguration
     {
+        private const string GeneralSettingsPath = "Assets/XR/Settings/QuestLAN XR General Settings.asset";
+
         [MenuItem("QuestLAN/Configure OpenXR platforms")]
         public static void ConfigureBatch()
         {
             if (Application.unityVersion != "6000.3.15f1")
                 throw new InvalidOperationException("Requires Unity 6000.3.15f1.");
-            if (!EditorBuildSettings.TryGetConfigObject(XRGeneralSettings.k_SettingsKey,
-                out XRGeneralSettingsPerBuildTarget targets))
+            // A merge can register the empty default container created by another Editor.
+            // Prefer this project's established, configured asset without replacing its contents.
+            var targets = AssetDatabase.LoadAssetAtPath<XRGeneralSettingsPerBuildTarget>(GeneralSettingsPath);
+            if (!targets && !EditorBuildSettings.TryGetConfigObject(XRGeneralSettings.k_SettingsKey, out targets))
             {
-                const string path = "Assets/XR/Settings/QuestLAN XR General Settings.asset";
-                targets = AssetDatabase.LoadAssetAtPath<XRGeneralSettingsPerBuildTarget>(path);
-                if (!targets)
-                {
-                    targets = ScriptableObject.CreateInstance<XRGeneralSettingsPerBuildTarget>();
-                    AssetDatabase.CreateAsset(targets, path);
-                }
-                EditorBuildSettings.AddConfigObject(XRGeneralSettings.k_SettingsKey, targets, true);
+                targets = ScriptableObject.CreateInstance<XRGeneralSettingsPerBuildTarget>();
+                AssetDatabase.CreateAsset(targets, GeneralSettingsPath);
             }
+            EditorBuildSettings.AddConfigObject(XRGeneralSettings.k_SettingsKey, targets, true);
             foreach (var group in new[] { BuildTargetGroup.Standalone, BuildTargetGroup.Android })
             {
                 if (!targets.HasManagerSettingsForBuildTarget(group))
@@ -118,6 +117,10 @@ namespace QuestLAN.Editor
 
         public static void ValidateBatch()
         {
+            if (!EditorBuildSettings.TryGetConfigObject(XRGeneralSettings.k_SettingsKey,
+                out XRGeneralSettingsPerBuildTarget registered) ||
+                AssetDatabase.GetAssetPath(registered) != GeneralSettingsPath)
+                throw new InvalidOperationException("XR settings registration was lost or replaced. Run QuestLAN/Configure OpenXR platforms.");
             var report = new List<string> { "Unity " + Application.unityVersion,
                 "Active build target: " + EditorUserBuildSettings.activeBuildTarget };
             foreach (var group in new[] { BuildTargetGroup.Standalone, BuildTargetGroup.Android })
