@@ -1,0 +1,6 @@
+{
+  "name": "QuestLAN.Networking",
+  "rootNamespace": "QuestLAN.Networking",
+  "references": ["QuestLAN.Shared", "Unity.Netcode.Runtime"],
+  "autoReferenced": true
+}

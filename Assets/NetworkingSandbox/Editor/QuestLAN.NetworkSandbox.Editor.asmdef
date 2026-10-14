@@ -1,0 +1,5 @@
+{
+  "name": "QuestLAN.NetworkSandbox.Editor",
+  "references": ["QuestLAN.Simulation", "QuestLAN.Networking", "Unity.Netcode.Runtime", "UnityEditor.TestRunner", "UnityEngine.TestRunner"],
+  "includePlatforms": ["Editor"]
+}
