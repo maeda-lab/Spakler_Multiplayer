@@ -1,7 +1,7 @@
 {
   "name": "QuestLAN.Tests",
   "rootNamespace": "QuestLAN.Tests",
-  "references": ["QuestLAN.Shared", "QuestLAN.XR", "QuestLAN.Avatar"],
+  "references": ["QuestLAN.Shared", "QuestLAN.XR", "QuestLAN.Avatar", "Unity.XR.Hands", "Unity.Collections"],
   "includePlatforms": [],
   "optionalUnityReferences": ["TestAssemblies"],
   "autoReferenced": false
