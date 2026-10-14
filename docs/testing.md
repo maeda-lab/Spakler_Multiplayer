@@ -1,6 +1,9 @@
 # 验证与实际结果
 
-网络合并后的配置故障及修复见 [xr-merge-repair.md](xr-merge-repair.md)。本轮 Unity EditMode 配置/场景回归 **4/4 通过**；真实 Link 复测与 Android 原生结果分别记录。
+## 本轮 XR 专项验收
+详见 [xr-acceptance.md](xr-acceptance.md)。Unity 隔离 PlayMode 自动测试 **7/7 通过**，覆盖独立手部丢失/恢复、缺失 Wrist/Dynamic 数据、暂停回调、subsystem 重启、五次组件启停/订阅和坐标重建。暂停回调为模拟触发，不等于 OS 暂停验收。
+
+Quest 2 / Link 90 秒分阶段检查：左失效/右有效 81 次，左恢复 120 次；右失效/左有效 116 次，右恢复 126 次；操作者确认骨骼和腕标记隐藏/恢复正常。真实 Play 重入 30 秒、269 个采样，左右手各有效 267 次，操作者确认正常。原始日志留在忽略的 Logs 目录；实际 OS 暂停、设备 Floor/Device 切换和 Quest 3 原生仍待验收。
 
 不得从静态检查推定 Unity 编译、从 Editor 测试推定 Quest 追踪或 LAN 已通过。
 
