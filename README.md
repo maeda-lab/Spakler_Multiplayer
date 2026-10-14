@@ -7,6 +7,8 @@ Meta Quest 3 双人局域网 VR 架构验证工程（工作目录名 Spakler_Mul
 ## 当前状态
 已有 URP 模板 SampleScene；M0 结构、Shared v1 与协作文档已建立。M1 以本地手腕采集与独立 Avatar 显示为边界；依赖解析、编译和测试的实测记录见 [testing](docs/testing.md)。硬件追踪、Android APK 与双机 LAN 均不能从编译结果推定通过。Meta SDK / Passthrough / 抓取尚未安装配置。
 
+后续已完成双平台 OpenXR 设置与 MainScene 官方骨骼接入，Android Development APK 构建成功；Quest 2 / Link 实际采到头/手帧，操作者重新 Play 后确认双手骨骼和左右手腕显示正常。Quest 3 原生、专项丢失/暂停恢复与双机 LAN 仍待验证。
+
 ## 启动
 Unity Hub 使用上述精确版本打开仓库根目录（Assets、Packages、ProjectSettings 同级），等待包解析和脚本编译。首次搭建按 [setup](docs/setup.md) 顺序进行；无需云服务账户。Android 模块已在本机 Editor 路径发现，实际 SDK/JDK/设备授权仍须验证。
 

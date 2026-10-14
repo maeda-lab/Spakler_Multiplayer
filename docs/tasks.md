@@ -9,7 +9,7 @@
 | M0 协作文档与交接 | A | 完成 | AGENTS、README、architecture、contract、setup、tasks、testing | Shared v1 |
 | M0 XR 官方包安装 | A | 完成 | 四包由 UPM 解析，manifest 和 lock 记录真实版本 | 6000.3.15f1 官方包元数据 |
 | M1 头/手腕源与本地显示 | A | 部分完成 | 最小代码、MainScene、官方 Sample 已生成；Unity 编译及 PlayMode 3/3 通过，仍待设备上有效性和重入验证 | XR 包；后续 OpenXR 配置 |
-| M1 OpenXR 平台配置、官方手骨架与追踪 | A | 待执行 | 双平台 validation、官方 Visualizer 骨骼、Quest 左右手独立丢失恢复测试 | Editor 人工设置、Quest 3 |
+| M1 OpenXR 平台配置、官方手骨架与追踪 | A | 部分完成 | 双平台 validation 0 errors；单 Rig 官方 HandVisualizer；Android APK 成功；Quest 2 Link 采到真实头/手帧，操作者再次 Play 确认骨骼/双腕正常；专项丢失/暂停恢复及 Quest 3 原生仍待验收 | 活动平台 validation、Quest 3 |
 | M2 MockPoseSource 与非 VR LAN | B | 待执行，可立即开始 | 不依赖硬件实现 IAvatarPoseSource；两进程直连、Ownership、缓存/插值、连接/RTT、同步变色、离线隐藏 | Shared v1；协调 NGO/Transport 依赖 |
 | M3 XR 与网络集成 | A+B | 待执行 | A 加入 B 网络 Prefab 到 MainScene，真实源替换 mock 无需改传输层 | M1 + M2 |
 | M4 Quest 双机 LAN 测试 | A+B | 待执行 | 同 LAN 两头显加入/退出/断线、头/双手状态、RTT 和事件同步通过 | M3、两台 Quest 3 |
@@ -23,4 +23,15 @@ B 负责 NetworkManager、Host/Client IPv4 直连、NetworkObject 生命周期/O
 不要更改 Shared 字段或 root 相对坐标，不把 XR 类型或 NGO serializer 加进 Shared；不要修改 MainScene、Visual Prefab、manifest 或 A 的 ProjectSettings。依赖安装先与 A 协调。A 的本地 source 不应读取 NGO Ownership，由集成层绑定本机拥有的 Avatar。
 
 ## A 下一步
-完成双平台 OpenXR 设置与官方 HandVisualizer 设备测试，再把骨骼可视化接入同一 Rig。明确验证 Camera Floor Offset 与 AvatarRoot 映射，记录头/左右手丢失与恢复、暂停/重入、Device/Floor 模式；不以无设备的测试声称 M1 完成。暂不接 Meta 抓取或网络。
+双平台 OpenXR 配置和同一 Rig 的官方骨骼接入已完成；下一阶段先补齐 M1 验收，同时 B 可独立启动 M2。Quest 2 / Link 的成功结果不替代 Quest 3 原生测试。
+
+| 顺序 | 工作 | 负责人 | 完成条件与依赖 |
+| --- | --- | --- | --- |
+| A1 | 单手失追踪及恢复 | A | 分别遮挡左/右手，仅对应腕标记和骨骼失效/隐藏，另一手继续更新；恢复后显示新姿态，保存 flags 记录 |
+| A2 | 暂停、重入与坐标检查 | A | 应用暂停/恢复、多次 Play 重入无陈旧有效帧/重复订阅；验证 Camera Floor Offset、AvatarRoot 平移旋转和 Floor/Device 高度一致 |
+| A3 | Quest 3 Android 原生验收 | A | 有设备后安装已构建 APK，验证头/双手骨骼/腕标记及 A1/A2；记录设备、runtime、包版本和结果 |
+| B1 | 模拟姿态源与 LAN 基础 | B | 协调 NGO/Transport 包修改，MockPoseSource 接 Shared v1；两个非 VR 进程完成 Host/Client IPv4 连接及 Ownership |
+| B2 | 同步及诊断 | B | 头/双手腕同步、序号处理、缓存插值、追踪 flags、断线超时隐藏、连接状态/RTT 和变色物体通过 |
+| AB1 | M3 集成 | A+B | B 提供独立网络 Prefab，A 接入 MainScene；替换模拟源为真实源，无需改变网络传输层，远端不创建 XR Rig |
+
+A3 受 Quest 3 可用性限制，可在等待设备时推进 B1/B2。M4 双 Quest LAN 和 M5 手指网络协议依次在基础集成稳定后开展；本阶段不提前接 Meta 抓取或传感器。
