@@ -1,0 +1,6 @@
+{
+  "name": "QuestLAN.XR",
+  "rootNamespace": "QuestLAN.XR",
+  "references": ["QuestLAN.Shared", "Unity.XR.Hands"],
+  "autoReferenced": true
+}
