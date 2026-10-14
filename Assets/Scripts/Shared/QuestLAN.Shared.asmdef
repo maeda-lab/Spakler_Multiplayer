@@ -1,0 +1,6 @@
+{
+  "name": "QuestLAN.Shared",
+  "rootNamespace": "QuestLAN.Shared",
+  "references": [],
+  "autoReferenced": true
+}
