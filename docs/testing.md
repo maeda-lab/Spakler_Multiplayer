@@ -1,5 +1,9 @@
 # 验证与实际结果
 
+## 当前交付目标（2026-10-21）
+
+Windows PC + Meta Link；Android 原生构建/部署从完成门槛移除，下面的旧记录按当时目标保留。当前两台 PC、零头显：已实测跨PC Mock双向同步、失效恢复、满房、退出重入、Host异常停机清理与重启后手动连接，不能据此补记硬件通过。本轮Unity EditMode7/7、PlayMode14/14、三种Windows构建通过；实际Private网络与仅Public的原放行规则不匹配，用户授权的临时规则修正后连接通过，规则已移除。最新操作与两端报告摘要见 [pcvr-lan-acceptance](pcvr-lan-acceptance.md)。
+
 ## 2026-10-19 M3 集成
 
 本轮实现及验证见 [m3-integration.md](m3-integration.md)。合并后的基线在2026-10-16实际重跑 EditMode4/4、PlayMode13/13；本轮 EditMode7/7、完整PlayMode14/14通过，后者包含MainScene同实例Host重启及头部指向Color到服务器/材质的真实调用路径。Quest 2 / Link独立Host已接收到真实头/手帧；面板对齐、可见白点操作和实际变色最终获操作者“一切正常”确认。原生/真实LAN结果另记。

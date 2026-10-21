@@ -1,5 +1,7 @@
 # 模块与控制权
 
+当前运行拓扑：每台 Windows PC 各运行一个应用并通过 Meta Link 连接本地头显，PC 之间使用 LAN；不要求应用部署到 Quest Android。每台 PC 仅一个硬件 Rig。下文的设备/Quest 坐标指各自头显追踪空间。
+
 ```
 本机 Quest -> Local XR Rig / XRHandsPoseSource -> Shared AvatarPoseFrame
                                                | -> AvatarPoseView（本地，隐藏头）

@@ -1,0 +1,64 @@
+param(
+    [ValidateSet('host', 'client', 'overflow', 'rejoin')][string]$Role = 'client',
+    [string]$Address = '127.0.0.1',
+    [ValidateRange(1, 65535)][int]$Port = 17777,
+    [ValidateRange(15, 3600)][int]$Duration = 30,
+    [string]$PlayerPath = '',
+    [string]$ReportDirectory = ''
+)
+$ErrorActionPreference = 'Stop'
+if (!$PlayerPath) {
+    $PlayerPath = Join-Path $PSScriptRoot 'Sandbox/QuestLANSandbox.exe'
+    if (!(Test-Path -LiteralPath $PlayerPath)) {
+        $PlayerPath = Join-Path $PSScriptRoot '../Build/M3Sandbox/QuestLANSandbox.exe'
+    }
+}
+$PlayerPath = (Resolve-Path -LiteralPath $PlayerPath).Path
+$parsedAddress = $null
+if (![Net.IPAddress]::TryParse($Address, [ref]$parsedAddress) -or
+    $parsedAddress.AddressFamily -ne [Net.Sockets.AddressFamily]::InterNetwork) {
+    throw 'Address must be the Host IPv4 address.'
+}
+if (!$ReportDirectory) {
+    $ReportDirectory = Join-Path $PSScriptRoot 'Reports'
+    if (Test-Path -LiteralPath (Join-Path $PSScriptRoot '../ProjectSettings')) {
+        $ReportDirectory = Join-Path $PSScriptRoot '../Logs/PCVR-LAN'
+    }
+}
+$null = New-Item -ItemType Directory -Path $ReportDirectory -Force
+$ReportDirectory = (Resolve-Path -LiteralPath $ReportDirectory).Path
+$runName = '{0}-{1}-{2}' -f $env:COMPUTERNAME, $Role, (Get-Date -Format 'yyyyMMdd-HHmmss-fff')
+$reportPath = Join-Path $ReportDirectory "$runName.json"
+$logPath = Join-Path $ReportDirectory "$runName.log"
+$playerArgs = @('-batchmode', '-nographics', '--lan-role', $Role, '--lan-address', $Address,
+    '--lan-port', "$Port", '--lan-duration', "$Duration", '--lan-report', $reportPath, '-logFile', $logPath)
+# Start-Process joins ArgumentList; quote each value so paths containing spaces survive.
+$argumentLine = ($playerArgs | ForEach-Object { '"{0}"' -f $_ }) -join ' '
+Write-Host "Starting $Role -> ${Address}:$Port for $Duration seconds. Host listens on all interfaces."
+$process = Start-Process -FilePath $PlayerPath -ArgumentList $argumentLine -PassThru -WindowStyle Hidden
+if (!$process.WaitForExit(($Duration + 45) * 1000)) {
+    # Stop only the process started by this invocation.
+    Stop-Process -Id $process.Id
+    throw "Player timed out; inspect $logPath"
+}
+if ($process.ExitCode -ne 0) { throw "Player exit $($process.ExitCode); inspect $logPath" }
+if (!(Test-Path -LiteralPath $reportPath)) { throw "Missing report; inspect $logPath" }
+$report = Get-Content -LiteralPath $reportPath -Raw | ConvertFrom-Json
+Write-Host "Report: $reportPath"
+Write-Host "Log:    $logPath"
+if ($Role -eq 'overflow') {
+    if ($report.connected -or $report.finalStatus -notmatch 'Room full') {
+        throw 'Overflow check failed: expected Room full with no local player.'
+    }
+} else {
+    $required = @('connected', 'sawTwoPlayers', 'sawRemoteTracked', 'sawRemoteMovement',
+        'remoteOwnershipRejected', 'rootReconstructionCorrect', 'sawRemoteColor')
+    if ($Role -ne 'rejoin') {
+        $required += @('sawRemoteSingleHandLost', 'sawRemoteAllLost', 'sawRemoteRecovery')
+    } else { $required += 'lateJoinColor' }
+    if ($Role -ne 'host') { $required += 'rttMeasured' }
+    foreach ($field in $required) {
+        if ($report.$field -ne $true) { throw "Check failed: $field. Inspect JSON and log." }
+    }
+}
+Write-Host 'Requested process checks passed. This report does not prove XR or a physical cross-PC link.'

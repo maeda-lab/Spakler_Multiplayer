@@ -1,7 +1,7 @@
 # QuestLANPrototype 协作约定
 
 ## 目标与环境
-Meta Quest 3 双人 LAN VR 原型：先本地头部/手腕追踪，再 NGO LAN 同步，最后手指关节。固定 **Unity 6000.3.15f1**，URP、Input System、XR Plugin Management、OpenXR、XRI、XR Hands；Android 原生部署，Link/Air Link 辅助调试。未来 Meta Interaction SDK 抓取；不复制旧线香花火工程，不增加 Relay/Lobby、全身 IK、传感器或语音。
+Windows PC + Meta Link 双人 LAN VR 原型：先本地头部/手腕追踪，再 NGO LAN 同步，最后手指关节。固定 **Unity 6000.3.15f1**，URP、Input System、XR Plugin Management、OpenXR、XRI、XR Hands。最终交付 Windows x64 程序，通过 Meta Link 运行；无需 Quest Android 原生打包或部署。已有 Android 配置和历史结果保留，不作为交付门槛。未来 Meta Interaction SDK 抓取；不复制旧线香花火工程，不增加 Relay/Lobby、全身 IK、传感器或语音。
 
 ## 分工与所有权
 - A：`Assets/Scenes`（包括未来 MainScene）、`Scripts/XR`、`Scripts/Avatar`、`Prefabs/Visual`、XR/初始化 Editor 工具、Packages、ProjectSettings、相关 docs。
