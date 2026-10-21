@@ -14,7 +14,8 @@ namespace QuestLAN.Simulation
     {
         [Serializable] private sealed class Report
         {
-            public string role, finalStatus;
+            public string role, finalStatus, address, machineName, startedUtc;
+            public int port;
             public bool connected, mapped, mappingCorrect, oneHardwareRig, sourceBound;
             public bool sawRemote, remoteHasNoRig, remoteInvalid, colorReplicated, rttMeasured;
             public bool mappingCleared, stoppedCleanly;
@@ -56,8 +57,12 @@ namespace QuestLAN.Simulation
             started = Time.realtimeSinceStartupAsDouble;
             var args = Environment.GetCommandLineArgs();
             if (!ushort.TryParse(Argument(args, "--m3-port"), out ushort port)) port = 17779;
+            report.address = Argument(args, "--m3-address") ?? "127.0.0.1";
+            report.port = port;
+            report.machineName = SystemInfo.deviceName;
+            report.startedUtc = DateTime.UtcNow.ToString("O");
             if (report.role == "host") session.StartHost("127.0.0.1", port);
-            else session.StartClient("127.0.0.1", port);
+            else session.StartClient(report.address, port);
         }
 
         private void Update()

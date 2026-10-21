@@ -12,7 +12,8 @@ namespace QuestLAN.Simulation
     {
         [Serializable] private sealed class Report
         {
-            public string role;
+            public string role, address, machineName, startedUtc;
+            public int port;
             public bool connected, sawTwoPlayers, sawRemoteTracked, sawRemoteMovement;
             public bool sawRemoteSingleHandLost, sawRemoteAllLost, sawRemoteRecovery;
             public bool remoteOwnershipRejected, rootReconstructionCorrect, sawRemoteLeave, sawRemoteRejoin;
@@ -28,6 +29,7 @@ namespace QuestLAN.Simulation
         private MockPoseSource source;
         private string role, reportPath;
         private double started, duration;
+        private double peerStarted = double.NaN;
         private int previousPlayers;
         private bool hadRemote, lastRemoteLost;
         private Vector3 previousRemoteHand;
@@ -46,10 +48,12 @@ namespace QuestLAN.Simulation
             if (!ushort.TryParse(Argument(args, "--lan-port"), out var port)) port = 7777;
             session = GetComponent<LanSessionController>();
             source = GetComponent<MockPoseSource>();
-            report = new Report { role = role };
+            string address = Argument(args, "--lan-address") ?? "127.0.0.1";
+            report = new Report { role = role, address = address, port = port,
+                machineName = SystemInfo.deviceName, startedUtc = DateTime.UtcNow.ToString("O") };
             started = Time.realtimeSinceStartupAsDouble;
             if (role == "host") session.StartHost("127.0.0.1", port);
-            else session.StartClient("127.0.0.1", port);
+            else session.StartClient(address, port);
             WriteReport();
         }
 
@@ -57,9 +61,12 @@ namespace QuestLAN.Simulation
         {
             if (report == null || finished) return;
             double elapsed = Time.realtimeSinceStartupAsDouble - started;
-            source.LeftHandTracked = role != "host" || elapsed < 4 || elapsed > 7;
-            source.RightHandTracked = role == "host" || elapsed < 4 || elapsed > 7;
-            source.OutputAvailable = elapsed < 9 || elapsed > 11;
+            // Start the tracking scenario when both peers exist, so a manually launched
+            // LAN client can join later without missing the Host's loss/recovery window.
+            double scenarioTime = double.IsNaN(peerStarted) ? 0 : elapsed - peerStarted;
+            source.LeftHandTracked = role != "host" || scenarioTime < 4 || scenarioTime > 7;
+            source.RightHandTracked = role == "host" || scenarioTime < 4 || scenarioTime > 7;
+            source.OutputAvailable = scenarioTime < 9 || scenarioTime > 11;
             var manager = GetComponent<NetworkManager>();
             var players = FindObjectsByType<NetworkPoseSync>(FindObjectsSortMode.None);
             int count = 0;
@@ -110,7 +117,12 @@ namespace QuestLAN.Simulation
                         report.rootReconstructionCorrect = true;
                 }
             }
-            if (count >= 2) report.sawTwoPlayers = true;
+            if (count >= 2)
+            {
+                report.sawTwoPlayers = true;
+                if (double.IsNaN(peerStarted)) peerStarted = elapsed;
+            }
+            else peerStarted = double.NaN;
             if (count != previousPlayers)
             {
                 report.events.Add($"{elapsed:F2}s players={count}");

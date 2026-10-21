@@ -11,6 +11,7 @@ namespace QuestLAN.Editor
     {
         public static void BuildWindowsBatch()
         {
+            Directory.CreateDirectory("Logs");
             Directory.CreateDirectory("Build/M3");
             var report = BuildPipeline.BuildPlayer(new BuildPlayerOptions
             {

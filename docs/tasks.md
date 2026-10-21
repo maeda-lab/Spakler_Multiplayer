@@ -1,6 +1,6 @@
 # 里程碑与交接
 
-状态：完成 / 部分完成 / 待执行；“实现”与“硬件验证”分开记录。更新日期 2026-10-19。当前集成进展以 [m3-integration](m3-integration.md) 为准；下面的 2026-10-14 交接段落保留为历史。
+状态：完成 / 部分完成 / 待执行；“实现”与“硬件验证”分开记录。更新日期 2026-10-21。用户明确最终为 Windows PC + Meta Link，取消 Android 原生门槛。当前集成证据以 [m3-integration](m3-integration.md) 为准，下一阶段见 [PCVR/LAN验收](pcvr-lan-acceptance.md)；下面的 2026-10-14 段落保留为历史，不代表当前必做任务。
 
 | 任务 | 负责人 | 状态 | 完成条件 | 依赖 |
 | --- | --- | --- | --- | --- |
@@ -8,11 +8,12 @@
 | M0 模块目录与 Shared v1 | A | 完成 | 目录/meta、8 字段及接口、无 XR/NGO 耦合 | 现有 Unity 工程 |
 | M0 协作文档与交接 | A | 完成 | AGENTS、README、architecture、contract、setup、tasks、testing | Shared v1 |
 | M0 XR 官方包安装 | A | 完成 | 四包由 UPM 解析，manifest 和 lock 记录真实版本 | 6000.3.15f1 官方包元数据 |
-| M1 头/手腕源与本地显示 | A | 部分完成 | 最小代码、MainScene、官方 Sample；Unity 编译及隔离 PlayMode 7/7 通过；Quest 2 Link 骨骼/腕标记、独立丢失恢复和重入通过；Quest 3 原生仍待验证 | XR 包；Quest 3 |
-| M1 OpenXR 平台配置、官方手骨架与追踪 | A | 部分完成 | 双平台 validation 0 errors；单 Rig 官方 HandVisualizer；Android APK 成功；Quest 2 专项验收通过；OS 实际暂停、设备模式切换和 Quest 3 原生仍待验收 | 活动平台 validation、Quest 3 |
+| M1 头/手腕源与本地显示 | A | PCVR 基础验收完成 | MainScene、官方 Sample；Unity 编译及隔离 PlayMode 7/7；Quest 2 Link 骨骼/腕标记、独立丢失恢复和重入通过 | XR 包；Meta Link |
+| M1 OpenXR 平台配置、官方手骨架与追踪 | A | PCVR 基础通过；扩展生命周期待验 | Standalone OpenXR、单 Rig 官方 HandVisualizer；真实系统暂停、Link 中断重连与重新居中另验 | Windows、Meta Link 头显 |
 | M2 MockPoseSource 与非 VR LAN | B | 桌面loopback与诊断扩展通过 | RTT/频率/权威变色、双向Mock、人数限制、离开重入和晚加入颜色有本轮实测；真实双PC LAN另验 | Shared v1；NGO/Transport 已锁定 |
-| M3 XR 与网络集成 | A+B | PCVR集成验收通过；原生/双头显待验 | MainScene真实源/出生点映射、远端视觉、无Mock；EditMode7/7、PlayMode14/14；Host接收到Quest 2 / Link真实头/手；面板/手动变色最终确认正常 | M1 + M2 |
-| M4 Quest 双机 LAN 测试 | A+B | 待执行 | 同 LAN 两头显加入/退出/断线、头/双手状态、RTT 和事件同步通过 | M3、两台 Quest 3 |
+| M3 XR 与网络集成 | A+B | 单端 PCVR 集成验收通过；双头显待验 | MainScene真实源/出生点映射、远端视觉、无Mock；EditMode7/7、PlayMode14/14；Host接收到Quest 2 / Link真实头/手；面板/手动变色最终确认正常 | M1 + M2 |
+| M4a 两 PC LAN 基础 | A+B | 跨PC基础及Host生命周期通过；物理链路故障/长时待验 | 同包Mock同步、满房、退出重入、Host异常停止与重启后手动连接通过；Client超时清理约30.6秒。Private防火墙规则不匹配已定位，授权临时放行后通过，现已移除 | 两台 PC；本轮零头显 |
+| M4b 双 PC + Meta Link | A+B | 待头显 | 每 PC 一个头显，真实头/双腕、独立失效恢复、事件同步、长时间稳定性；RTT 与显示延迟分别记录 | M4a、两套 Meta Link |
 | M5 手指骨骼协议 | A+B | 待执行 | 独立 HandJointFrame、关节索引/validity/局部坐标/频率/压缩协商并实测 | M4 稳定 |
 
 ## B 初始交接（历史，已实现）
