@@ -1,0 +1,5 @@
+{
+  "name": "QuestLAN.Integration",
+  "references": ["QuestLAN.Shared", "QuestLAN.XR", "QuestLAN.Avatar", "QuestLAN.Networking", "Unity.Netcode.Runtime", "Unity.XR.CoreUtils", "UnityEngine.UI"],
+  "autoReferenced": true
+}

@@ -17,6 +17,9 @@ namespace QuestLAN.Simulation
             public bool sawRemoteSingleHandLost, sawRemoteAllLost, sawRemoteRecovery;
             public bool remoteOwnershipRejected, rootReconstructionCorrect, sawRemoteLeave, sawRemoteRejoin;
             public int maxReceived, connectionCount;
+            public bool rttMeasured, sawRemoteColor, lateJoinColor;
+            public double currentRttMs, smoothedRttMs;
+            public int rttSamples;
             public string finalStatus;
             public List<string> events = new List<string>();
         }
@@ -30,6 +33,7 @@ namespace QuestLAN.Simulation
         private Vector3 previousRemoteHand;
         private bool hasRemoteHand;
         private bool finished;
+        private bool colorRequested;
 
         private void Start()
         {
@@ -63,7 +67,26 @@ namespace QuestLAN.Simulation
             {
                 if (!player.IsSpawned) continue;
                 count++;
-                if (player.IsOwner) { report.connected = true; continue; }
+                if (player.IsOwner)
+                {
+                    report.connected = true;
+                    var localSignals = player.GetComponent<NetworkPlayerSignals>();
+                    if (localSignals)
+                    {
+                        if (!colorRequested && elapsed >= 2) { colorRequested = true; localSignals.RequestColorChange(); }
+                        report.rttMeasured |= localSignals.Rtt.HasSample;
+                        report.currentRttMs = localSignals.Rtt.CurrentMilliseconds;
+                        report.smoothedRttMs = localSignals.Rtt.SmoothedMilliseconds;
+                        report.rttSamples = localSignals.Rtt.SampleCount;
+                    }
+                    continue;
+                }
+                var remoteSignals = player.GetComponent<NetworkPlayerSignals>();
+                if (remoteSignals && remoteSignals.ColorIndex.Value == 1)
+                {
+                    report.sawRemoteColor = true;
+                    if (elapsed < 2) report.lateJoinColor = true;
+                }
                 report.maxReceived = Math.Max(report.maxReceived, player.ReceivedCount);
                 if (!report.remoteOwnershipRejected)
                 {

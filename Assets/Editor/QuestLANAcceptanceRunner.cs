@@ -14,6 +14,8 @@ namespace QuestLAN.Editor
     {
         private const string Active = "QuestLAN.Acceptance.Active";
         private const string OriginalStartup = "QuestLAN.Acceptance.OriginalStartup";
+        private const string BatchAll = "QuestLAN.Acceptance.BatchAll";
+        private const string BatchExit = "QuestLAN.Acceptance.BatchExit";
         private const string Request = "Logs/QuestLAN-Acceptance-Request.txt";
         private static double nextPoll;
         private static TestRunnerApi api;
@@ -26,6 +28,17 @@ namespace QuestLAN.Editor
 
         private static void Poll()
         {
+            if (SessionState.GetBool(BatchExit, false))
+            {
+                // RunFinished fires before the framework exits Play and removes its bootstrap scene.
+                if (!EditorApplication.isPlayingOrWillChangePlaymode && !EditorApplication.isUpdating &&
+                    !EditorApplication.isCompiling && EditorApplication.timeSinceStartup >= SessionState.GetFloat(BatchExit + ".After", 0))
+                {
+                    SessionState.SetBool(BatchExit, false);
+                    EditorApplication.Exit(SessionState.GetInt(BatchExit + ".Code", 1));
+                }
+                return;
+            }
             if (EditorApplication.timeSinceStartup < nextPoll) return;
             nextPoll = EditorApplication.timeSinceStartup + 0.5;
             if (EditorApplication.isCompiling || EditorApplication.isUpdating ||
@@ -55,13 +68,25 @@ namespace QuestLAN.Editor
         [MenuItem("QuestLAN/Run isolated XR acceptance tests")]
         public static void RunAutomated()
         {
+            RunAutomatedInternal(false);
+        }
+
+        public static void RunAllAutomatedBatch()
+        {
+            RunAutomatedInternal(true);
+        }
+
+        private static void RunAutomatedInternal(bool all)
+        {
             if (EditorApplication.isPlayingOrWillChangePlaymode || SessionState.GetBool(Active, false))
                 throw new InvalidOperationException("Stop Play Mode or the existing test run first.");
             if (!EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo()) return;
+            if (all && Application.isBatchMode) EditorSceneManager.OpenScene("Assets/Scenes/MainScene.unity");
             var settings = XRGeneralSettingsPerBuildTarget.XRGeneralSettingsForBuildTarget(BuildTargetGroup.Standalone);
             if (!settings) throw new InvalidOperationException("Standalone XR settings missing.");
             SessionState.SetBool(OriginalStartup, settings.InitManagerOnStart);
             SessionState.SetBool(Active, true);
+            SessionState.SetBool(BatchAll, all);
             // In-memory only; do not persist the disabled value to project assets.
             settings.InitManagerOnStart = false;
             Directory.CreateDirectory("Logs");
@@ -71,7 +96,8 @@ namespace QuestLAN.Editor
                 api = ScriptableObject.CreateInstance<TestRunnerApi>();
                 api.Execute(new ExecutionSettings(new Filter
                 {
-                    testMode = TestMode.PlayMode, assemblyNames = new[] { "QuestLAN.Tests" }
+                    testMode = TestMode.PlayMode, assemblyNames = all ?
+                        new[] { "QuestLAN.Tests", "QuestLAN.Networking.Tests", "QuestLAN.Simulation.Tests" } : new[] { "QuestLAN.Tests" }
                 }));
             }
             catch
@@ -106,13 +132,21 @@ namespace QuestLAN.Editor
             public void RunFinished(ITestResultAdaptor result)
             {
                 if (!SessionState.GetBool(Active, false)) return;
+                bool all = SessionState.GetBool(BatchAll, false);
                 try
                 {
-                    TestRunnerApi.SaveResultToFile(result, "Logs/QuestLAN-XRAcceptance.xml");
+                    TestRunnerApi.SaveResultToFile(result, all ? "Logs/M3-PlayMode-Final.xml" : "Logs/QuestLAN-XRAcceptance.xml");
                 }
                 finally { RestoreStartup(); }
                 Status(result.ResultState + "; passed=" + result.PassCount + "; failed=" + result.FailCount +
                     "; skipped=" + result.SkipCount + ". XR startup restored.");
+                SessionState.SetBool(BatchAll, false);
+                if (all && Application.isBatchMode)
+                {
+                    SessionState.SetInt(BatchExit + ".Code", result.FailCount == 0 && result.SkipCount == 0 ? 0 : 1);
+                    SessionState.SetFloat(BatchExit + ".After", (float)EditorApplication.timeSinceStartup + 2);
+                    SessionState.SetBool(BatchExit, true);
+                }
             }
         }
     }

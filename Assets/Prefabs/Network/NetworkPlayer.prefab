@@ -12,6 +12,7 @@ GameObject:
   - component: {fileID: 6552587338326684566}
   - component: {fileID: 8865663223101954392}
   - component: {fileID: 452917458653132507}
+  - component: {fileID: 2555998261101994241}
   m_Layer: 0
   m_Name: NetworkPlayer
   m_TagString: Untagged
@@ -87,3 +88,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 93e2063b19c7995498e0afe94509ea2f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: QuestLAN.Simulation::QuestLAN.Simulation.SandboxNetworkAvatar
+  pulseMaterial: {fileID: 2100000, guid: eec6e76c979e00a4e8c8b85c42a217ce, type: 2}
+--- !u!114 &2555998261101994241
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 67321747942484349}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 995e1860647735a44888d9b7acd89253, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: QuestLAN.Networking::QuestLAN.Networking.NetworkPlayerSignals
+  ShowTopMostFoldoutHeaderGroup: 1

@@ -11,6 +11,7 @@ namespace QuestLAN.Networking
     [RequireComponent(typeof(NetworkManager), typeof(UnityTransport))]
     public sealed class LanSessionController : MonoBehaviour
     {
+        public const ushort SessionProtocolVersion = 2;
         [SerializeField] private MonoBehaviour localPoseSource;
         [SerializeField] private bool diagnosticLogs = true;
         [SerializeField] private string hostAddress = "127.0.0.1";
@@ -68,6 +69,7 @@ namespace QuestLAN.Networking
             connectingSince = Time.realtimeSinceStartupAsDouble;
             transport.SetConnectionData(address, port, host ? "0.0.0.0" : null);
             manager.NetworkConfig.ConnectionApproval = true;
+            manager.NetworkConfig.ProtocolVersion = SessionProtocolVersion;
             manager.NetworkConfig.ConnectionData = new[] { NetworkAvatarPosePacket.ProtocolVersion };
             manager.NetworkConfig.EnableSceneManagement = false;
             SetStatus(host ? "Starting Host" : "Connecting");
@@ -153,7 +155,7 @@ namespace QuestLAN.Networking
 
         private void OnGUI()
         {
-            GUILayout.BeginArea(new Rect(12, 12, 370, 300), GUI.skin.box);
+            GUILayout.BeginArea(new Rect(12, 12, 400, 410), GUI.skin.box);
             GUILayout.Label("QuestLAN — two-player LAN");
             GUILayout.Label("Status: " + Status);
             bool idle = !requested && !manager.IsListening && !manager.ShutdownInProgress;
@@ -170,9 +172,22 @@ namespace QuestLAN.Networking
             GUI.enabled = true;
             diagnosticLogs = GUILayout.Toggle(diagnosticLogs, "Diagnostic logs");
             foreach (var player in FindObjectsByType<NetworkPoseSync>(FindObjectsSortMode.None))
-                if (player.IsSpawned) GUILayout.Label($"Player {player.OwnerClientId}: {(player.IsOwner ? "Local Owner" : "Remote")} | received {player.ReceivedCount}");
+            {
+                if (!player.IsSpawned) continue;
+                GUILayout.Label($"Player {player.OwnerClientId}: {(player.IsOwner ? "Local Owner" : "Remote")} | received {player.ReceivedCount}");
+                var signals = player.GetComponent<NetworkPlayerSignals>();
+                if (!signals) continue;
+                GUILayout.Label($"Pose sent {signals.SendHz:F1} Hz / received {signals.ReceiveHz:F1} Hz | color {signals.ColorIndex.Value}");
+                if (!player.IsOwner) continue;
+                var rtt = signals.Rtt;
+                GUILayout.Label(IsHostLabel(manager) ? "Host: local server (no remote RTT)" :
+                    rtt.TimedOut ? "RTT: timeout" : rtt.HasSample ? $"RTT {rtt.CurrentMilliseconds:F1} ms / smoothed {rtt.SmoothedMilliseconds:F1} ms" : "RTT: waiting");
+                if (GUILayout.Button("Change synchronized color")) signals.RequestColorChange();
+            }
             GUILayout.EndArea();
         }
+
+        private static bool IsHostLabel(NetworkManager value) => value.IsHost;
 
         private void StartFromUI(bool host)
         {

@@ -1,9 +1,9 @@
-# 环境配置（2026-10-14）
+# 环境配置（更新 2026-10-19）
 
 ## 工程检查
-工程已由 Unity Hub 创建，URP 模板，不需要重建。`ProjectSettings/ProjectVersion.txt` = `6000.3.15f1 (c1aa84e375f6)`。本机 Editor 位于 `D:/Program Files/UnityHub/Editor/6000.3.15f1-x86_64/Editor/Unity.exe`；不要使用旁边的 6000.3.16f1 或 2022.3。AndroidPlayer 模块目录存在，但未运行 Android Build。序列化已是 Force Text，版本控制已是 Visible Meta Files。
+工程已由 Unity Hub 创建，URP 模板，不需要重建。`ProjectSettings/ProjectVersion.txt` = `6000.3.15f1 (c1aa84e375f6)`。本机 Editor 位于 `D:/Program Files/UnityHub/Editor/6000.3.15f1-x86_64/Editor/Unity.exe`；不要使用旁边的 6000.3.16f1 或 2022.3。AndroidPlayer 模块存在，M1 Android APK 已成功构建；当前集成版构建结果见 [m3-integration](m3-integration.md)。序列化已是 Force Text，版本控制已是 Visible Meta Files。
 
-原内层 `Spakler_Multiplayer/.git` 已经用户同意移至工程根目录，保留 main 历史与 origin：`https://github.com/maeda-lab/Spakler_Multiplayer.git`。原仓库初始提交 `03e153a`。本次工作分支 `codex/xr-hands-m0`；未 push、merge 或提交。本环境 Git 对目录所有权有疑义；检查使用仅命令级 `git -c safe.directory=D:/Unity/Spakler_Multiplayer status`，未修改全局 Git 配置。若你的常用账户也出现此错误，先核对目录所有权，再为确切项目目录设置信任，不要信任整块 D: 盘。
+原内层 `Spakler_Multiplayer/.git` 已经用户同意移至工程根目录，保留 main 历史与 origin：`https://github.com/maeda-lab/Spakler_Multiplayer.git`。原仓库初始提交 `03e153a`。初始 XR 分支为 `codex/xr-hands-m0`，已按用户授权提交并合入；本轮集成在 `codex/xr-lan-integration`，不自动提交/push。本环境 Git 对目录所有权有疑义；检查使用仅命令级 `git -c safe.directory=D:/Unity/Spakler_Multiplayer status`，未修改全局 Git 配置。若你的常用账户也出现此错误，先核对目录所有权，再为确切项目目录设置信任，不要信任整块 D: 盘。
 
 ## 包版本
 以下来自实际 manifest / packages-lock / UPM 日志；四个 XR 版本来自**此精确编辑器随附 Package Manager 元数据**，不是猜测或按旧教程选择。最终编译/测试结果另见 testing。
@@ -17,8 +17,10 @@
 | com.unity.xr.openxr | 1.16.1 | UPM 实际解析 |
 | com.unity.xr.hands | 1.7.3 | UPM 实际解析 |
 | com.unity.xr.interaction.toolkit | 3.3.1 | UPM 实际解析 |
+| com.unity.netcode.gameobjects | 2.11.2 | M2 已安装并锁定 |
+| com.unity.transport | 2.6.0 | NGO 实际依赖，已锁定 |
 
-其他全部解析版本以 `Packages/packages-lock.json` 为准；保留模板现有包，不擅自删除。NGO / Unity Transport 未安装，由 B 与 A 协调 manifest 后安装。Multiplayer Center 是模板包，不代表已实现 NGO。
+其他全部解析版本以 `Packages/packages-lock.json` 为准；保留模板现有包，不擅自删除。NGO / Unity Transport 已由 B 在用户授权后安装，本轮不改包版本。Multiplayer Center 是模板包。
 
 Meta 目标清单暂未安装或验证：meta-openxr 2.5.0、Meta SDK all 203.0.2 / core、interaction、interaction.ovr 203.0.0、AR Foundation 6.5.0、Composition Layers 2.4.0。这些是用户期望，**不是本次实际解析版本**。最小头/手腕追踪无需抓取或 Passthrough；后续按 Meta 官方发布说明、UPM 解析及编译结果核实，尤其 OVR backend 与 OpenXR/XR Hands 共存不能推定可用。不要同时启用竞争的 Oculus/OpenXR loader 或创建 OVR 与 XR Origin 双 Rig。
 
@@ -61,6 +63,8 @@ Android 构建工具：固定版本 Editor 以 `-buildTarget Android -executeMet
 USB 接入并在头显确认允许调试后，用 Editor 自带 `SDK/platform-tools/adb.exe devices -l` 检查状态；必须为 `device`，`unauthorized` 需在头显授权。APK 成功后可 `adb install -r <apk>`，再在 Quest 中启动应用，按 testing 表逐项验证。若开发者手动切换到官方 HandVisualizer 场景构建，须先检查 Build Profile Scene List，不能误以为默认 MainScene APK 就是官方样例 APK。
 
 ## Quest 2 Link 辅助 PCVR 验证
+M3 已通过 Quest 2 / Link 的真实源到独立Host同步、面板显示及头部指向Color实测；操作与证据见 [m3-integration](m3-integration.md)。MainScene未联网时仍提供离线XR。头显内移动头部，把白点对准按钮保持1.2秒；本机色块在面板右侧。M3Headless只用于无硬件进程测试，正常VR应运行M3产品或Editor，不能用关闭XR的测试构建验证头显。
+
 可先用现有 Quest 2 的 Link 会话检查 PCVR 启动与头部追踪，结果单独标为 Quest 2 / PCVR。Link 手追踪是否暴露给 XR Hands 要实测；没有有效手帧不能直接推断为代码错误，也不能宣称原生 Quest 3 已通过。
 
 头显进入 PCVR 后，Unity 切 Windows x64，菜单 `QuestLAN/Run 90-second Link hardware probe`。工具通过 Unity API 进入 MainScene Play，约每 0.25 秒记录一次真实源帧，90 秒后停止 Play 并输出 CSV/摘要；可手动提前停止。依次观察环境随头移动、左右手骨骼和腕标记、单手遮挡恢复；期间让头显保持佩戴并适当移动。设备型号和画面正确性由操作者确认，计数只能证明收到了相应有效帧。Logs 被忽略，不提交原始本地姿态日志。

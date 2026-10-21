@@ -1,5 +1,7 @@
 # M2 LAN 网络模块与 A 交接
 
+2026-10-19 补充：已进入 A+B 集成。NetworkPlayerSignals 提供 owner Ping/Pong、本机时钟 RTT/平滑/超时、姿态频率以及服务器权威颜色 NetworkVariable。桌面 NetworkPlayer 与独立产品 XRNetworkPlayer 使用同一组件；Shared/姿态包 v1 不变。NGO会话配置协议升至2，避免旧Behaviour布局的构建接入；双方需更新程序。MainScene 的绑定、VR 控件及本轮验证结果见 [m3-integration](m3-integration.md)。下文 2026-10-14 的“RTT/颜色待实现”是当时状态。
+
 2026-10-14，feature/network，Unity 6000.3.15f1、Shared v1.0。用户本轮明确授权 B 代 A 安装并锁定 NGO/Transport。实际 UPM 解析：NGO 2.11.2、Transport 2.6.0（NGO 2.11.2 声明的依赖）；manifest/lock 已记录。既有 XR 包版本未改变。API 按本机实际 PackageCache 源码核对，使用统一 Rpc 与 InvokePermission，未使用旧 ServerRpc/ClientRpc 或默认 NetworkTransform。
 
 ## 拓扑与入口
