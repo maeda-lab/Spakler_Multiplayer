@@ -885,6 +885,118 @@ Transform:
   - {fileID: 2128978801}
   m_Father: {fileID: 497586360}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1001 &1755610845
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 3659429137215477286, guid: f7d088ac90c5f6e4bb30a4ac3f1462d2, type: 3}
+      propertyPath: localPoseSource
+      value:
+      objectReference: {fileID: 0}
+    - target: {fileID: 5627960530760200406, guid: f7d088ac90c5f6e4bb30a4ac3f1462d2, type: 3}
+      propertyPath: NetworkConfig.PlayerPrefab
+      value:
+      objectReference: {fileID: 6945969170947623457, guid: e92e32487b8879d478afdc327b83234c, type: 3}
+    - target: {fileID: 5627960530760200406, guid: f7d088ac90c5f6e4bb30a4ac3f1462d2, type: 3}
+      propertyPath: 'NetworkConfig.Prefabs.NetworkPrefabsLists.Array.data[0]'
+      value:
+      objectReference: {fileID: 11400000, guid: d72b928735f0f5d4597598cdfcfacfa5, type: 2}
+    - target: {fileID: 5986307979277693388, guid: f7d088ac90c5f6e4bb30a4ac3f1462d2, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5986307979277693388, guid: f7d088ac90c5f6e4bb30a4ac3f1462d2, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5986307979277693388, guid: f7d088ac90c5f6e4bb30a4ac3f1462d2, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5986307979277693388, guid: f7d088ac90c5f6e4bb30a4ac3f1462d2, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5986307979277693388, guid: f7d088ac90c5f6e4bb30a4ac3f1462d2, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5986307979277693388, guid: f7d088ac90c5f6e4bb30a4ac3f1462d2, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5986307979277693388, guid: f7d088ac90c5f6e4bb30a4ac3f1462d2, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5986307979277693388, guid: f7d088ac90c5f6e4bb30a4ac3f1462d2, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5986307979277693388, guid: f7d088ac90c5f6e4bb30a4ac3f1462d2, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5986307979277693388, guid: f7d088ac90c5f6e4bb30a4ac3f1462d2, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6080834437389755277, guid: f7d088ac90c5f6e4bb30a4ac3f1462d2, type: 3}
+      propertyPath: m_Name
+      value: XR NetworkSession
+      objectReference: {fileID: 0}
+    m_RemovedComponents:
+    - {fileID: 8776971849317265798, guid: f7d088ac90c5f6e4bb30a4ac3f1462d2, type: 3}
+    - {fileID: 8588062145458492832, guid: f7d088ac90c5f6e4bb30a4ac3f1462d2, type: 3}
+    - {fileID: 5326500711822422760, guid: f7d088ac90c5f6e4bb30a4ac3f1462d2, type: 3}
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 6080834437389755277, guid: f7d088ac90c5f6e4bb30a4ac3f1462d2, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1755610848}
+    - targetCorrespondingSourceObject: {fileID: 6080834437389755277, guid: f7d088ac90c5f6e4bb30a4ac3f1462d2, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1755610847}
+  m_SourcePrefab: {fileID: 100100000, guid: f7d088ac90c5f6e4bb30a4ac3f1462d2, type: 3}
+--- !u!1 &1755610846 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 6080834437389755277, guid: f7d088ac90c5f6e4bb30a4ac3f1462d2, type: 3}
+  m_PrefabInstance: {fileID: 1755610845}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &1755610847
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1755610846}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0fc426edf24454a4d98fd3cb61f0aca8, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: QuestLAN.Integration::QuestLAN.Integration.VRSessionPanel
+  headCamera: {fileID: 1499414568}
+  rigRoot: {fileID: 497586360}
+--- !u!114 &1755610848
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1755610846}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d225ee1481aa58c47ab612607fe5f7f8, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: QuestLAN.Integration::QuestLAN.Integration.XRNetworkBinding
+  rig: {fileID: 497586361}
+  source: {fileID: 497586359}
+  localRoot: {fileID: 29462576}
 --- !u!1 &2092218304
 GameObject:
   m_ObjectHideFlags: 0
@@ -1045,3 +1157,4 @@ SceneRoots:
   - {fileID: 29462576}
   - {fileID: 458472526}
   - {fileID: 2092218306}
+  - {fileID: 1755610845}

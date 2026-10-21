@@ -1,5 +1,7 @@
 # M2 网络验证记录
 
+以下为2026-10-14历史。2026-10-19的RTT/颜色、MainScene绑定、Host重启以及Quest 2 / Link数据抵达Host和实际变色验收见 [m3-integration](m3-integration.md)；后续结果不改写早期未实现/未验证记录。
+
 日期 2026-10-14（JST），feature/network，固定 Unity 6000.3.15f1。
 
 ## 实际完成

@@ -1,5 +1,9 @@
 # 验证与实际结果
 
+## 2026-10-19 M3 集成
+
+本轮实现及验证见 [m3-integration.md](m3-integration.md)。合并后的基线在2026-10-16实际重跑 EditMode4/4、PlayMode13/13；本轮 EditMode7/7、完整PlayMode14/14通过，后者包含MainScene同实例Host重启及头部指向Color到服务器/材质的真实调用路径。Quest 2 / Link独立Host已接收到真实头/手帧；面板对齐、可见白点操作和实际变色最终获操作者“一切正常”确认。原生/真实LAN结果另记。
+
 ## 本轮 XR 专项验收
 详见 [xr-acceptance.md](xr-acceptance.md)。Unity 隔离 PlayMode 自动测试 **7/7 通过**，覆盖独立手部丢失/恢复、缺失 Wrist/Dynamic 数据、暂停回调、subsystem 重启、五次组件启停/订阅和坐标重建。暂停回调为模拟触发，不等于 OS 暂停验收。
 
