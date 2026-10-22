@@ -14,8 +14,12 @@
 | M3 XR 与网络集成 | A+B | 单端 PCVR 集成验收通过；双头显待验 | MainScene真实源/出生点映射、远端视觉、无Mock；EditMode7/7、PlayMode14/14；Host接收到Quest 2 / Link真实头/手；面板/手动变色最终确认正常 | M1 + M2 |
 | M4a 两 PC LAN 基础 | A+B | 跨PC基础及Host生命周期通过；故障/长时结果见扩展项 | 同包Mock同步、满房、退出重入、Host异常停止与重启后手动连接通过；Client超时清理约30.6秒。Private防火墙规则不匹配已定位，授权临时放行后通过，现已移除 | 两台 PC；本轮零头显 |
 | M4b 双 PC + Meta Link | A+B | 待头显 | 每 PC 一个头显，真实头/双腕、独立失效恢复、事件同步、长时间稳定性；RTT 与显示延迟分别记录 | M4a、两套 Meta Link |
-| M4a 扩展：故障/长时 | A+B | 跨PC30分钟故障长测及物理Wi-Fi断网/手动重连通过；Client CSV趋势待核对 | 独立UDP代理有实际丢弃计数；Client正常完成1830秒、连接1829.6秒、32237快照；超时/恢复各1、无姿态/视觉违例；Host资源窗口稳定。最终PlayMode16/16；报告冲突保护实际进程验证通过 | 两PC；补测Client/Host超时隐藏1770/1765次全通过，重连44.84秒；临时规则已清理；见lan-resilience |
+| M4a 扩展：故障/长时 | A+B | 功能验收收尾；跨PC30分钟故障长测及物理断网/重连通过；Client CSV趋势待核对 | 独立UDP代理有实际丢弃计数；Client正常完成1830秒、连接1829.6秒、32237快照；超时/恢复各1、无姿态/视觉违例；Host资源窗口稳定。最终PlayMode16/16；报告冲突保护实际进程验证通过 | 两PC；补测Client/Host超时隐藏1770/1765次全通过，重连44.84秒；临时规则已清理；见lan-resilience |
 | M5 手指骨骼协议 | A+B | 待执行 | 独立 HandJointFrame、关节索引/validity/局部坐标/频率/压缩协商并实测 | M4 稳定 |
+
+## M4a 阶段收尾
+
+LAN 功能阶段已收尾，实现经 PR #9 合入 main（083fbfd）。当前零头显，M4b 保留待设备，不提前实施 M5。Client 完整 CSV 未回收，资源趋势单独保留待办；不补记无泄漏结论，不影响已通过功能结果。交付包、实际验证、测试清理及恢复顺序见 [M4a 收尾](m4a-closeout.md)。
 
 ## B 初始交接（历史，已实现）
 使用 `Assets/Scripts/Shared/AvatarPoseFrame.cs` / `IAvatarPoseSource.cs` 与 [interface-contract](interface-contract.md)。创建 `QuestLAN.Simulation.MockPoseSource`（B 自选命名空间）实现接口，NGO serializer 放在 Networking；自己的 asmdef 引用 QuestLAN.Shared。测试目录中的 TestPoseSource 只是 PlayMode fixture，不是 B 的 runtime mock。
