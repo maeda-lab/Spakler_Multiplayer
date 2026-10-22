@@ -12,6 +12,9 @@ $null = New-Item -ItemType Directory -Path $packagePath
 Copy-Item -LiteralPath $sandboxPath -Destination (Join-Path $packagePath 'Sandbox') -Recurse
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'Run-LanCheck.ps1') -Destination $packagePath
 Copy-Item -LiteralPath (Join-Path $projectRoot 'docs/pcvr-lan-acceptance.md') -Destination (Join-Path $packagePath 'README.md')
+if (Test-Path -LiteralPath (Join-Path $projectRoot 'docs/lan-resilience.md')) {
+    Copy-Item -LiteralPath (Join-Path $projectRoot 'docs/lan-resilience.md') -Destination $packagePath
+}
 $commit = & git -c "safe.directory=$($projectRoot.Replace('\', '/'))" -C $projectRoot rev-parse HEAD
 if ($LASTEXITCODE -ne 0) { throw 'Cannot read source commit.' }
 $sourceStatus = & git -c "safe.directory=$($projectRoot.Replace('\', '/'))" -C $projectRoot status --porcelain

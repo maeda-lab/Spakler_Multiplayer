@@ -8,10 +8,12 @@ using UnityEngine;
 namespace QuestLAN.Simulation
 {
     /// <summary>Opt-in real-process LAN checks; inactive without --lan-role command-line argument.</summary>
+    [DefaultExecutionOrder(500)] // Observe visuals after AvatarPoseView.LateUpdate.
     public sealed class LanSmokeProbe : MonoBehaviour
     {
         [Serializable] private sealed class Report
         {
+            public int schemaVersion = 2;
             public string role, address, machineName, startedUtc;
             public int port;
             public bool connected, sawTwoPlayers, sawRemoteTracked, sawRemoteMovement;
@@ -22,6 +24,17 @@ namespace QuestLAN.Simulation
             public double currentRttMs, smoothedRttMs;
             public int rttSamples;
             public string finalStatus;
+            public bool completedNormally;
+            public double elapsedSeconds, requestedDurationSeconds, connectedSeconds, maxFrameStepSeconds;
+            public int observedSentSnapshots, observedReceivedSnapshots, receiveTimeoutCount, timeoutRecoveries;
+            public int timeoutVisualChecks, timeoutHiddenSamples, timeoutVisibleViolations, timeoutInvalidPoseViolations;
+            public double maxReceiveAgeSeconds, longestReceiveTimeoutSeconds;
+            public long peakWorkingSetBytes, finalWorkingSetBytes, peakPrivateBytes, finalPrivateBytes;
+            public long finalManagedBytes, finalUnityAllocatedBytes;
+            public double processCpuSeconds;
+            public int metricSamples, eventsOmitted;
+            public int headlessTargetFrameRate;
+            public string metricsError;
             public List<string> events = new List<string>();
         }
         private Report report;
@@ -36,8 +49,30 @@ namespace QuestLAN.Simulation
         private bool hasRemoteHand;
         private bool finished;
         private bool colorRequested;
+        private StreamWriter metrics;
+        private FileStream outputLease;
+        private bool initialized;
+        private double nextMetrics, nextReport, timeoutStarted;
+        private NetworkPoseSync observedLocal, observedRemote;
+        private int previousSent, previousReceived;
+        private bool receiveTimedOut;
+        private bool limitedFrameRate;
+        private int originalFrameRate, originalVSync;
 
         private void Start()
+        {
+            try { Initialize(); }
+            catch (Exception error)
+            {
+                finished = true; enabled = false;
+                metrics?.Dispose(); metrics = null;
+                outputLease?.Dispose(); outputLease = null;
+                Debug.LogError("LAN probe initialization failed; choose a new report filename and preserve existing outputs. " + error);
+                Application.Quit(2);
+            }
+        }
+
+        private void Initialize()
         {
             var args = Environment.GetCommandLineArgs();
             role = Argument(args, "--lan-role");
@@ -50,17 +85,31 @@ namespace QuestLAN.Simulation
             source = GetComponent<MockPoseSource>();
             string address = Argument(args, "--lan-address") ?? "127.0.0.1";
             report = new Report { role = role, address = address, port = port,
-                machineName = SystemInfo.deviceName, startedUtc = DateTime.UtcNow.ToString("O") };
+                machineName = SystemInfo.deviceName, startedUtc = DateTime.UtcNow.ToString("O"),
+                requestedDurationSeconds = duration };
             started = Time.realtimeSinceStartupAsDouble;
+            if (Application.isBatchMode)
+            {
+                originalFrameRate = Application.targetFrameRate; originalVSync = QualitySettings.vSyncCount;
+                QualitySettings.vSyncCount = 0; Application.targetFrameRate = 60;
+                limitedFrameRate = true; report.headlessTargetFrameRate = 60;
+            }
+            outputLease = ReserveReportOutput(reportPath);
+            metrics = new StreamWriter(new FileStream(reportPath + ".metrics.csv", FileMode.CreateNew,
+                FileAccess.Write, FileShare.Read)) { AutoFlush = true };
+            metrics.WriteLine("elapsed_seconds,players,sent_snapshots,received_snapshots,receive_age_seconds,receive_timed_out,rtt_ms,smoothed_rtt_ms,rtt_timed_out,working_set_bytes,private_bytes,managed_bytes,unity_allocated_bytes,cpu_seconds,max_frame_step_seconds");
             if (role == "host") session.StartHost("127.0.0.1", port);
             else session.StartClient(address, port);
             WriteReport();
+            initialized = true;
         }
 
         private void Update()
         {
-            if (report == null || finished) return;
+            if (!initialized || report == null || finished) return;
             double elapsed = Time.realtimeSinceStartupAsDouble - started;
+            report.elapsedSeconds = elapsed;
+            report.maxFrameStepSeconds = Math.Max(report.maxFrameStepSeconds, Time.unscaledDeltaTime);
             // Start the tracking scenario when both peers exist, so a manually launched
             // LAN client can join later without missing the Host's loss/recovery window.
             double scenarioTime = double.IsNaN(peerStarted) ? 0 : elapsed - peerStarted;
@@ -76,6 +125,9 @@ namespace QuestLAN.Simulation
                 count++;
                 if (player.IsOwner)
                 {
+                    if (observedLocal != player) { observedLocal = player; previousSent = 0; }
+                    report.observedSentSnapshots += Math.Max(0, player.SentCount - previousSent);
+                    previousSent = player.SentCount;
                     report.connected = true;
                     var localSignals = player.GetComponent<NetworkPlayerSignals>();
                     if (localSignals)
@@ -87,6 +139,26 @@ namespace QuestLAN.Simulation
                         report.rttSamples = localSignals.Rtt.SampleCount;
                     }
                     continue;
+                }
+                if (observedRemote != player)
+                {
+                    observedRemote = player; previousReceived = 0; receiveTimedOut = false;
+                }
+                report.observedReceivedSnapshots += Math.Max(0, player.ReceivedCount - previousReceived);
+                previousReceived = player.ReceivedCount;
+                double age = player.ReceiveAgeSeconds;
+                if (!double.IsInfinity(age)) report.maxReceiveAgeSeconds = Math.Max(report.maxReceiveAgeSeconds, age);
+                if (player.ReceiveTimedOut && !receiveTimedOut)
+                {
+                    receiveTimedOut = true; timeoutStarted = elapsed; report.receiveTimeoutCount++;
+                    Event($"{elapsed:F2}s pose receive timeout");
+                }
+                if (receiveTimedOut)
+                    report.longestReceiveTimeoutSeconds = Math.Max(report.longestReceiveTimeoutSeconds, elapsed - timeoutStarted);
+                if (!player.ReceiveTimedOut && receiveTimedOut)
+                {
+                    receiveTimedOut = false; report.timeoutRecoveries++;
+                    Event($"{elapsed:F2}s pose receive recovered");
                 }
                 var remoteSignals = player.GetComponent<NetworkPlayerSignals>();
                 if (remoteSignals && remoteSignals.ColorIndex.Value == 1)
@@ -119,26 +191,134 @@ namespace QuestLAN.Simulation
             }
             if (count >= 2)
             {
+                report.connectedSeconds += Time.unscaledDeltaTime;
                 report.sawTwoPlayers = true;
                 if (double.IsNaN(peerStarted)) peerStarted = elapsed;
             }
             else peerStarted = double.NaN;
             if (count != previousPlayers)
             {
-                report.events.Add($"{elapsed:F2}s players={count}");
+                Event($"{elapsed:F2}s players={count}");
                 if (count >= 2) { report.connectionCount++; if (hadRemote) report.sawRemoteRejoin = true; hadRemote = true; }
                 if (previousPlayers >= 2 && count < 2) report.sawRemoteLeave = true;
                 previousPlayers = count;
                 WriteReport();
             }
+            if (count < 2) { observedRemote = null; receiveTimedOut = false; }
+            if (elapsed >= nextMetrics) { nextMetrics = elapsed + 1; SampleMetrics(elapsed, count); }
+            if (elapsed >= nextReport) { nextReport = elapsed + 5; WriteReport(); }
             if (elapsed >= duration)
             {
                 report.finalStatus = session.Status;
+                report.completedNormally = true;
                 WriteReport();
+                metrics?.Dispose(); metrics = null;
+                outputLease?.Dispose(); outputLease = null;
                 finished = true;
                 session.Disconnect();
                 Invoke(nameof(Quit), 0.5f);
             }
+        }
+
+        private void LateUpdate()
+        {
+            if (!initialized || finished || !observedRemote || !observedRemote.ReceiveTimedOut) return;
+            if (observedRemote.TryGetLatestPose(out var frame) &&
+                (frame.HeadTracked || frame.LeftHandTracked || frame.RightHandTracked)) report.timeoutInvalidPoseViolations++;
+            var head = observedRemote.transform.Find("Head");
+            var left = observedRemote.transform.Find("Left wrist (cube)");
+            var right = observedRemote.transform.Find("Right wrist (capsule)");
+            if (!head || !left || !right) return;
+            report.timeoutVisualChecks++;
+            if (!head.gameObject.activeSelf && !left.gameObject.activeSelf && !right.gameObject.activeSelf)
+                report.timeoutHiddenSamples++;
+            else report.timeoutVisibleViolations++;
+        }
+
+        public static FileStream ReserveReportOutput(string path)
+        {
+            string fullPath = Path.GetFullPath(path);
+            Directory.CreateDirectory(Path.GetDirectoryName(fullPath));
+            // Exclusive per-run lease closes the check/open race between two processes.
+            var lease = new FileStream(fullPath + ".run.lock", FileMode.OpenOrCreate,
+                FileAccess.ReadWrite, FileShare.None, 4096, FileOptions.DeleteOnClose);
+            try
+            {
+                if (File.Exists(fullPath) || File.Exists(fullPath + ".metrics.csv"))
+                    throw new IOException("Report or metrics already exists: " + fullPath);
+                return lease;
+            }
+            catch { lease.Dispose(); throw; }
+        }
+
+        private void Event(string value)
+        {
+            if (report.events.Count < 256) report.events.Add(value);
+            else report.eventsOmitted++;
+        }
+
+        private void SampleMetrics(double elapsed, int players)
+        {
+            try
+            {
+                report.finalStatus = session.Status;
+                using var process = System.Diagnostics.Process.GetCurrentProcess();
+                process.Refresh();
+                ReadProcessMemory(out report.finalWorkingSetBytes, out report.finalPrivateBytes);
+                report.peakWorkingSetBytes = Math.Max(report.peakWorkingSetBytes, report.finalWorkingSetBytes);
+                report.peakPrivateBytes = Math.Max(report.peakPrivateBytes, report.finalPrivateBytes);
+                report.finalManagedBytes = GC.GetTotalMemory(false);
+                report.finalUnityAllocatedBytes = UnityEngine.Profiling.Profiler.GetTotalAllocatedMemoryLong();
+                report.processCpuSeconds = process.TotalProcessorTime.TotalSeconds;
+                report.metricSamples++;
+                double age = observedRemote ? observedRemote.ReceiveAgeSeconds : -1;
+                if (double.IsInfinity(age)) age = -1;
+                var signals = observedLocal ? observedLocal.GetComponent<NetworkPlayerSignals>() : null;
+                metrics.WriteLine(FormattableString.Invariant($"{elapsed:F3},{players},{report.observedSentSnapshots},{report.observedReceivedSnapshots},{age:F4},{receiveTimedOut},{report.currentRttMs:F3},{report.smoothedRttMs:F3},{(signals && signals.Rtt.TimedOut)},{report.finalWorkingSetBytes},{report.finalPrivateBytes},{report.finalManagedBytes},{report.finalUnityAllocatedBytes},{report.processCpuSeconds:F3},{report.maxFrameStepSeconds:F4}"));
+            }
+            catch (Exception error)
+            {
+                if (report.metricsError == null) { report.metricsError = error.Message; Debug.LogException(error); }
+            }
+        }
+
+        public static void ReadProcessMemory(out long workingSet, out long privateBytes)
+        {
+#if UNITY_STANDALONE_WIN || UNITY_EDITOR_WIN
+            // Unity's Windows Mono Process properties can silently return zero.
+            uint size = (uint)System.Runtime.InteropServices.Marshal.SizeOf<ProcessMemoryCounters>();
+            if (!GetProcessMemoryInfo(CurrentProcessHandle(), out var counters, size))
+                throw new System.ComponentModel.Win32Exception(System.Runtime.InteropServices.Marshal.GetLastWin32Error());
+            workingSet = (long)counters.WorkingSetSize.ToUInt64();
+            privateBytes = (long)counters.PrivateUsage.ToUInt64();
+#else
+            using var process = System.Diagnostics.Process.GetCurrentProcess();
+            process.Refresh(); workingSet = process.WorkingSet64; privateBytes = process.PrivateMemorySize64;
+#endif
+            if (workingSet <= 0 || privateBytes <= 0)
+                throw new InvalidOperationException("Process memory counters unavailable; zero is not a valid measurement.");
+        }
+
+#if UNITY_STANDALONE_WIN || UNITY_EDITOR_WIN
+        [System.Runtime.InteropServices.StructLayout(System.Runtime.InteropServices.LayoutKind.Sequential)]
+        private struct ProcessMemoryCounters
+        {
+            public uint Size, PageFaultCount;
+            public UIntPtr PeakWorkingSetSize, WorkingSetSize, QuotaPeakPagedPoolUsage, QuotaPagedPoolUsage;
+            public UIntPtr QuotaPeakNonPagedPoolUsage, QuotaNonPagedPoolUsage, PagefileUsage, PeakPagefileUsage, PrivateUsage;
+        }
+        [System.Runtime.InteropServices.DllImport("kernel32.dll", EntryPoint = "GetCurrentProcess")]
+        private static extern IntPtr CurrentProcessHandle();
+        [System.Runtime.InteropServices.DllImport("psapi.dll", SetLastError = true)]
+        [return: System.Runtime.InteropServices.MarshalAs(System.Runtime.InteropServices.UnmanagedType.Bool)]
+        private static extern bool GetProcessMemoryInfo(IntPtr process, out ProcessMemoryCounters counters, uint size);
+#endif
+
+        private void OnDestroy()
+        {
+            metrics?.Dispose(); metrics = null;
+            outputLease?.Dispose(); outputLease = null;
+            if (limitedFrameRate) { Application.targetFrameRate = originalFrameRate; QualitySettings.vSyncCount = originalVSync; }
         }
 
         private void Quit() => Application.Quit();

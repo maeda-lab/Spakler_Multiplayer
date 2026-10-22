@@ -22,8 +22,10 @@ namespace QuestLAN.Networking.Tests
             Assert.That(buffer.Push(Frame(uint.MaxValue), 1), Is.True);
             Assert.That(buffer.Push(Frame(uint.MaxValue), 1.01), Is.False);
             Assert.That(buffer.Push(Frame(uint.MaxValue - 1), 1.02), Is.False);
+            Assert.That(buffer.LastArrivalSeconds, Is.EqualTo(1), "Rejected packets must not refresh receive age.");
             Assert.That(buffer.Push(Frame(0), 1.03), Is.True);
             buffer.Reset();
+            Assert.That(buffer.LastArrivalSeconds, Is.Zero);
             Assert.That(buffer.Push(Frame(1), 2), Is.True);
         }
 

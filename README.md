@@ -23,3 +23,4 @@ Unity Hub 使用上述精确版本打开仓库根目录（Assets、Packages、Pr
 - [网络历史验收](docs/network-testing.md)
 - [M3 集成与验收](docs/m3-integration.md)
 - [PCVR/LAN 验收与跨机命令](docs/pcvr-lan-acceptance.md)
+- [LAN 故障注入与长时统计](docs/lan-resilience.md)

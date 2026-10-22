@@ -17,3 +17,4 @@
 *.apk
 *.aab
 *.unitypackage
+__pycache__/
