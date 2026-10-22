@@ -13,6 +13,33 @@ namespace QuestLAN.Simulation.Tests
         [UnityTearDown] public IEnumerator TearDown() { Object.Destroy(root); yield return null; }
 
         [UnityTest]
+        public IEnumerator ProcessMemoryCountersDoNotSilentlyReturnZero()
+        {
+            yield return null;
+            LanSmokeProbe.ReadProcessMemory(out long workingSet, out long privateBytes);
+            Assert.That(workingSet, Is.GreaterThan(0));
+            Assert.That(privateBytes, Is.GreaterThan(0));
+        }
+
+        [UnityTest]
+        public IEnumerator ReportReservationRejectsConcurrentAndExistingOutputs()
+        {
+            string path = System.IO.Path.Combine(Application.temporaryCachePath,
+                "QuestLAN-reservation-" + System.Guid.NewGuid().ToString("N") + ".json");
+            try
+            {
+                using (var lease = LanSmokeProbe.ReserveReportOutput(path))
+                    Assert.Throws<System.IO.IOException>(() => LanSmokeProbe.ReserveReportOutput(path));
+                System.IO.File.WriteAllText(path, "preserve this report");
+                Assert.Throws<System.IO.IOException>(() => LanSmokeProbe.ReserveReportOutput(path));
+                Assert.That(System.IO.File.ReadAllText(path), Is.EqualTo("preserve this report"));
+                Assert.That(System.IO.File.Exists(path + ".run.lock"), Is.False);
+            }
+            finally { if (System.IO.File.Exists(path)) System.IO.File.Delete(path); }
+            yield return null;
+        }
+
+        [UnityTest]
         public IEnumerator LifecycleInvalidatesAndResamplesWithoutReadSideEffects()
         {
             var source = root.AddComponent<MockPoseSource>();

@@ -14,6 +14,7 @@ namespace QuestLAN.Networking
         private double lastArrival;
         public int AcceptedCount { get; private set; }
         public uint LastSequence => lastSequence;
+        public double LastArrivalSeconds => lastArrival;
 
         public static bool IsNewer(uint candidate, uint previous) => unchecked((int)(candidate - previous)) > 0;
 

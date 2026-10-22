@@ -23,6 +23,9 @@ namespace QuestLAN.Networking
         public int ReceivedCount => receiveBuffer.AcceptedCount;
         public uint ReceivedSequence => receiveBuffer.LastSequence;
         public int SentCount { get; private set; }
+        public double ReceiveAgeSeconds => ReceivedCount == 0 ? double.PositiveInfinity :
+            System.Math.Max(0, Time.realtimeSinceStartupAsDouble - receiveBuffer.LastArrivalSeconds);
+        public bool ReceiveTimedOut => IsSpawned && !IsOwner && ReceivedCount > 0 && ReceiveAgeSeconds > receiveTimeout;
 
         public void BindLocalSource(MonoBehaviour source)
         {
