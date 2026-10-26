@@ -77,6 +77,18 @@ namespace QuestLAN.EditorTests
             Assert.That(player.GetComponent<NetworkAvatarPresentation>().PulseMaterial, Is.Not.Null);
             Assert.That(player.GetComponent<NetworkAvatarPresentation>().PulseMaterial.shader.name, Is.EqualTo("Universal Render Pipeline/Unlit"));
             Assert.That(player.GetComponent<SandboxNetworkAvatar>(), Is.Null);
+            var headPrefab = player.GetComponent<NetworkAvatarPresentation>().HeadAvatarPrefab;
+            Assert.That(headPrefab, Is.Not.Null);
+            Assert.That(headPrefab.GetComponentsInChildren<Renderer>(true).Length, Is.EqualTo(3));
+            Assert.That(headPrefab.transform.Find("Left Eye").localPosition.z, Is.GreaterThan(0));
+            Assert.That(headPrefab.transform.Find("Right Eye").localPosition.z, Is.GreaterThan(0));
+            Assert.That(headPrefab.GetComponentsInChildren<Collider>(true), Is.Empty);
+            var localHead = objects.Single(item => item.name == "Local Head Avatar");
+            int localLayer = LayerMask.NameToLayer("LocalAvatarHead");
+            Assert.That(localLayer, Is.GreaterThanOrEqualTo(8));
+            Assert.That(localHead.GetComponentsInChildren<Transform>(true).All(item => item.gameObject.layer == localLayer), Is.True);
+            var camera = objects.Select(item => item.GetComponent<Camera>()).Single(item => item);
+            Assert.That(camera.cullingMask & (1 << localLayer), Is.Zero, "Local head must not obscure first-person VR.");
             Assert.That(player.GetComponentsInChildren<Camera>(true), Is.Empty);
             Assert.That(player.GetComponentsInChildren<XROrigin>(true), Is.Empty);
         }

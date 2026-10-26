@@ -23,6 +23,23 @@ namespace QuestLAN.Networking
         private bool stopping;
         private bool terminalFailure;
         private double connectingSince;
+        private bool showStatus = true;
+        public string HostAddress { get => hostAddress; set => hostAddress = value; }
+        public string PortText { get => portText; set => portText = value; }
+        public bool CanStart => manager && !requested && !stopping && !manager.IsListening && !manager.ShutdownInProgress;
+        public bool CanDisconnect => manager && !stopping && (requested || manager.IsListening);
+        public int PlayerCount
+        {
+            get
+            {
+                if (!manager || !manager.IsListening || manager.SpawnManager == null) return 0;
+                int count = 0;
+                foreach (var item in manager.SpawnManager.SpawnedObjectsList)
+                    if (item && item.IsSpawned && item.IsPlayerObject) count++;
+                return count;
+            }
+        }
+        public string Role => manager && manager.IsHost ? "Host" : manager && manager.IsClient ? "Client" : "Offline";
         public string Status { get; private set; } = "Idle";
         public MonoBehaviour LocalPoseSource => localPoseSource;
         public bool DiagnosticLogs => diagnosticLogs;
@@ -158,18 +175,24 @@ namespace QuestLAN.Networking
             GUILayout.BeginArea(new Rect(12, 12, 400, 410), GUI.skin.box);
             GUILayout.Label("QuestLAN — two-player LAN");
             GUILayout.Label("Status: " + Status);
-            bool idle = !requested && !manager.IsListening && !manager.ShutdownInProgress;
+            bool idle = CanStart;
             GUI.enabled = idle;
-            GUILayout.Label("Client target IPv4 (Host listens on 0.0.0.0)");
+            GUILayout.Label("Host IP (IPv4)");
             hostAddress = GUILayout.TextField(hostAddress);
             GUILayout.Label("UDP port"); portText = GUILayout.TextField(portText);
             GUILayout.BeginHorizontal();
             if (GUILayout.Button("Start Host")) StartFromUI(true);
-            if (GUILayout.Button("Start Client")) StartFromUI(false);
+            if (GUILayout.Button("Join")) StartFromUI(false);
             GUILayout.EndHorizontal();
-            GUI.enabled = !idle;
-            if (GUILayout.Button("Stop / Disconnect")) Disconnect();
+            GUI.enabled = CanDisconnect;
+            if (GUILayout.Button("Disconnect")) Disconnect();
             GUI.enabled = true;
+            if (GUILayout.Button(showStatus ? "Hide Status" : "Show Status")) showStatus = !showStatus;
+            if (showStatus)
+            {
+                GUILayout.Label($"Role: {Role} | Players: {PlayerCount}/2");
+                GUILayout.Label(manager.IsHost ? "Disconnect closes the room for everyone." : "Disconnect leaves the room; the application stays open.");
+            }
             diagnosticLogs = GUILayout.Toggle(diagnosticLogs, "Diagnostic logs");
             foreach (var player in FindObjectsByType<NetworkPoseSync>(FindObjectsSortMode.None))
             {
@@ -192,7 +215,7 @@ namespace QuestLAN.Networking
         private void StartFromUI(bool host)
         {
             if (!ushort.TryParse(portText, out var port) || port == 0) { SetStatus("Failed: UDP port must be 1–65535"); return; }
-            StartSession(host, hostAddress, port);
+            StartSession(host, host ? "127.0.0.1" : hostAddress, port);
         }
     }
 }

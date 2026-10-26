@@ -103,3 +103,4 @@ MonoBehaviour:
   m_EditorClassIdentifier: QuestLAN.Integration::QuestLAN.Integration.NetworkAvatarPresentation
   ShowTopMostFoldoutHeaderGroup: 1
   pulseMaterial: {fileID: 2100000, guid: eec6e76c979e00a4e8c8b85c42a217ce, type: 2}
+  headAvatarPrefab: {fileID: 9156949232569701207, guid: c4e068fded3ff7a438a4531ccae8c47c, type: 3}

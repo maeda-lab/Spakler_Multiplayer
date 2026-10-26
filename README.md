@@ -13,6 +13,10 @@ M0 工程与 Shared v1 已完成；MainScene 已接入真实源/网络出生点�
 
 后续已完成双平台 OpenXR 设置与 MainScene 官方骨骼接入，历史 Android Development APK 构建成功（不再属于交付要求）。[XR 专项验收](docs/xr-acceptance.md)的 7/7 自动测试通过；Quest 2 / Link 的双手骨骼/腕标记、左右手独立遮挡恢复及真实 Play 重入均通过数据与操作者确认。实际系统暂停恢复、Link 中断重连、重新居中和双头显 PCVR 仍待验收；双 PC Mock LAN 结果见上述收尾记录。下一阶段操作以 [PCVR/LAN 验收](docs/pcvr-lan-acceptance.md) 为准；本轮可用两台 PC、零头显。
 
+## 头部 Avatar 与连接按钮
+
+MainScene 新增蓝色球体头部与两颗朝向眼睛，并提供英文 Host / Join / Disconnect / Show Status。桌面支持鼠标键盘，VR 使用白点凝视和数字键盘；Client 输入 Host IPv4 加入，Host 断开关闭房间。实现及无头显验证边界见 [头部与连接 UI](docs/head-avatar-session-ui.md)。本机头部从第一人称相机排除，远端显示头部；失追踪仍隐藏。
+
 ## 启动
 Unity Hub 使用上述精确版本打开仓库根目录（Assets、Packages、ProjectSettings 同级），等待包解析和脚本编译。活动目标使用 Windows x64；进入 Meta Link PCVR 会话后打开 MainScene 或运行 Windows 产品。首次搭建按 [setup](docs/setup.md) 顺序进行；无需云服务账户或 Android 工具链。无头显时使用独立 Sandbox。
 

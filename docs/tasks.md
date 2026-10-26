@@ -1,6 +1,6 @@
 # 里程碑与交接
 
-状态：完成 / 部分完成 / 待执行；“实现”与“硬件验证”分开记录。更新日期 2026-10-22。用户明确最终为 Windows PC + Meta Link，取消 Android 原生门槛。当前集成证据以 [m3-integration](m3-integration.md) 为准，下一阶段见 [PCVR/LAN验收](pcvr-lan-acceptance.md)；下面的 2026-10-14 段落保留为历史，不代表当前必做任务。
+状态：完成 / 部分完成 / 待执行；“实现”与“硬件验证”分开记录。更新日期 2026-10-26。用户明确最终为 Windows PC + Meta Link，取消 Android 原生门槛。当前集成证据以 [m3-integration](m3-integration.md) 为准，下一阶段见 [PCVR/LAN验收](pcvr-lan-acceptance.md)；下面的 2026-10-14 段落保留为历史，不代表当前必做任务。
 
 | 任务 | 负责人 | 状态 | 完成条件 | 依赖 |
 | --- | --- | --- | --- | --- |
@@ -15,6 +15,7 @@
 | M4a 两 PC LAN 基础 | A+B | 跨PC基础及Host生命周期通过；故障/长时结果见扩展项 | 同包Mock同步、满房、退出重入、Host异常停止与重启后手动连接通过；Client超时清理约30.6秒。Private防火墙规则不匹配已定位，授权临时放行后通过，现已移除 | 两台 PC；本轮零头显 |
 | M4b 双 PC + Meta Link | A+B | 待头显 | 每 PC 一个头显，真实头/双腕、独立失效恢复、事件同步、长时间稳定性；RTT 与显示延迟分别记录 | M4a、两套 Meta Link |
 | M4a 扩展：故障/长时 | A+B | 功能验收收尾；跨PC30分钟故障长测及物理断网/重连通过；Client CSV趋势待核对 | 独立UDP代理有实际丢弃计数；Client正常完成1830秒、连接1829.6秒、32237快照；超时/恢复各1、无姿态/视觉违例；Host资源窗口稳定。最终PlayMode16/16；报告冲突保护实际进程验证通过 | 两PC；补测Client/Host超时隐藏1770/1765次全通过，重连44.84秒；临时规则已清理；见lan-resilience |
+| 头部 Avatar 与英文会话 UI | A+B 集成 | 实现与无硬件回归完成，真实 Link 待验 | 球体/双眼头部、相机排除本机头部、远端显示；Host/Join/Disconnect/Show Status、共享 IP/Port、人数与状态；EditMode7/7、PlayMode18/18 | 用户新增需求；见head-avatar-session-ui |
 | M5 手指骨骼协议 | A+B | 待执行 | 独立 HandJointFrame、关节索引/validity/局部坐标/频率/压缩协商并实测 | M4 稳定 |
 
 ## M4a 阶段收尾
