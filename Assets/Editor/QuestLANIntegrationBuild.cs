@@ -15,7 +15,7 @@ namespace QuestLAN.Editor
             Directory.CreateDirectory("Build/M3");
             var report = BuildPipeline.BuildPlayer(new BuildPlayerOptions
             {
-                scenes = new[] { "Assets/Scenes/MainScene.unity", "Assets/NetworkingSandbox/Scenes/LanSandbox.unity" },
+                scenes = new[] { "Assets/Scenes/DesktopLobby.unity", "Assets/Scenes/MainScene.unity", "Assets/NetworkingSandbox/Scenes/LanSandbox.unity" },
                 locationPathName = "Build/M3/QuestLANPrototype.exe",
                 target = BuildTarget.StandaloneWindows64,
                 options = BuildOptions.Development
@@ -31,6 +31,7 @@ namespace QuestLAN.Editor
                 // This in-memory value is serialized into these builds only, never saved to the project.
                 settings.InitManagerOnStart = false;
                 BuildProcessTest("Build/M3Headless/QuestLANPrototype.exe", "Assets/Scenes/MainScene.unity", "Logs/M3-HeadlessBuild.txt");
+                BuildProcessTest("Build/LobbyHeadless/QuestLANPrototype.exe", "Assets/Scenes/DesktopLobby.unity", "Logs/Lobby-HeadlessBuild.txt");
                 BuildProcessTest("Build/M3Sandbox/QuestLANSandbox.exe", "Assets/NetworkingSandbox/Scenes/LanSandbox.unity", "Logs/M3-SandboxBuild.txt");
             }
             finally { settings.InitManagerOnStart = startup; }
@@ -40,7 +41,7 @@ namespace QuestLAN.Editor
         {
             Directory.CreateDirectory(Path.GetDirectoryName(output));
             var report = BuildPipeline.BuildPlayer(new BuildPlayerOptions
-            { scenes = new[] { scene }, locationPathName = output, target = BuildTarget.StandaloneWindows64, options = BuildOptions.Development });
+            { scenes = scene.EndsWith("DesktopLobby.unity") ? new[] { scene, "Assets/Scenes/MainScene.unity" } : new[] { scene }, locationPathName = output, target = BuildTarget.StandaloneWindows64, options = BuildOptions.Development });
             File.WriteAllText(log, report.summary.result + " errors=" + report.summary.totalErrors);
             if (report.summary.result != BuildResult.Succeeded) throw new InvalidOperationException("Process-test build failed: " + output);
         }

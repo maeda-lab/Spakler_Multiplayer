@@ -62,6 +62,17 @@ namespace QuestLAN.Networking.Tests
         }
 
         [Test]
+        public void LocomotionPosesBeyondRoomScaleStillHaveAFiniteBound()
+        {
+            var packet = new NetworkAvatarPosePacket { Version = 1, Frame = Frame(1) };
+            packet.Frame.Head.position.x = 8;
+            Assert.That(packet.TryValidate(), Is.True);
+            Assert.That(packet.TryValidate(5), Is.False);
+            packet.Frame.Head.position.x = 51;
+            Assert.That(packet.TryValidate(), Is.False);
+        }
+
+        [Test]
         public void RejectsMalformedTrackedDataAndCanonicalizesInvalidPoses()
         {
             var packet = new NetworkAvatarPosePacket { Version = 1, Frame = Frame(1) };

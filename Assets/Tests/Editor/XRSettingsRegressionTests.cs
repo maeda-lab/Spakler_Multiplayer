@@ -49,7 +49,7 @@ namespace QuestLAN.EditorTests
             {
                 var general = registered.SettingsForBuildTarget(group);
                 Assert.That(general, Is.Not.Null, group.ToString());
-                Assert.That(general.InitManagerOnStart, Is.True, group.ToString());
+                Assert.That(general.InitManagerOnStart, Is.EqualTo(group == BuildTargetGroup.Android), "Windows must defer XR until room entry; Android is retained as history.");
                 Assert.That(general.Manager, Is.Not.Null);
                 Assert.That(general.Manager.activeLoaders.Count, Is.EqualTo(1));
                 Assert.That(general.Manager.activeLoaders[0], Is.InstanceOf<OpenXRLoader>());

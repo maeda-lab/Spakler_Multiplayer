@@ -1,6 +1,6 @@
 {
   "name": "QuestLAN.Simulation",
   "rootNamespace": "QuestLAN.Simulation",
-  "references": ["QuestLAN.Shared", "QuestLAN.Avatar", "QuestLAN.Networking", "Unity.Netcode.Runtime", "QuestLAN.Integration", "QuestLAN.XR", "Unity.XR.CoreUtils", "UnityEngine.UI"],
+  "references": ["QuestLAN.Shared", "QuestLAN.Avatar", "QuestLAN.Networking", "Unity.Netcode.Runtime", "QuestLAN.Integration", "QuestLAN.XR", "Unity.XR.CoreUtils", "UnityEngine.UI", "Unity.XR.Management"],
   "autoReferenced": true
 }

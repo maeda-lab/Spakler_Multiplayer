@@ -17,6 +17,122 @@ namespace QuestLAN.Editor
     {
         private const string PlayerPath = "Assets/Prefabs/Visual/XRNetworkPlayer.prefab";
 
+        [MenuItem("QuestLAN/Set up fixed locomotion landmarks")]
+        public static void SetupLocomotionLandmarksBatch()
+        {
+            var scene = EditorSceneManager.OpenScene("Assets/Scenes/MainScene.unity");
+            var old = scene.GetRootGameObjects().FirstOrDefault(item => item.name == "Room Landmarks");
+            if (old) UnityEngine.Object.DestroyImmediate(old);
+            var root = new GameObject("Room Landmarks");
+            var vertices = new System.Collections.Generic.List<Vector3>();
+            var triangles = new System.Collections.Generic.List<int>();
+            for (int i = -25; i <= 25; i++)
+            {
+                float width = i % 5 == 0 ? 0.045f : 0.015f;
+                foreach (var along in new[] { Vector3.forward, Vector3.right })
+                {
+                    var side = Vector3.Cross(Vector3.up, along);
+                    var center = side * i + Vector3.up * 0.008f;
+                    int index = vertices.Count;
+                    vertices.Add(center - side * width * 0.5f - along * 25);
+                    vertices.Add(center - side * width * 0.5f + along * 25);
+                    vertices.Add(center + side * width * 0.5f + along * 25);
+                    vertices.Add(center + side * width * 0.5f - along * 25);
+                    triangles.AddRange(new[] { index, index + 1, index + 2, index, index + 2, index + 3 });
+                }
+            }
+            const string meshPath = "Assets/Prefabs/Visual/RoomGrid.asset";
+            var mesh = AssetDatabase.LoadAssetAtPath<Mesh>(meshPath);
+            if (!mesh) { mesh = new Mesh { name = "Fixed room grid" }; AssetDatabase.CreateAsset(mesh, meshPath); }
+            mesh.Clear(); mesh.SetVertices(vertices); mesh.SetTriangles(triangles, 0); mesh.RecalculateNormals(); mesh.RecalculateBounds();
+            EditorUtility.SetDirty(mesh);
+            var grid = new GameObject("World floor grid", typeof(MeshFilter), typeof(MeshRenderer));
+            grid.transform.SetParent(root.transform, false); grid.GetComponent<MeshFilter>().sharedMesh = mesh;
+            grid.GetComponent<MeshRenderer>().sharedMaterial = AvatarMaterial("RoomGrid", new Color(0.1f, 0.2f, 0.26f));
+            int number = 0;
+            foreach (float x in new[] { -4f, 4f }) foreach (float z in new[] { -4f, 4f })
+                HandPart(root.transform, "Fixed marker " + (++number), new Vector3(x, 0.6f, z), new Vector3(0.18f, 1.2f, 0.18f),
+                    Quaternion.identity, AvatarMaterial("RoomMarker", new Color(1, 0.55f, 0.1f)));
+            EditorSceneManager.MarkSceneDirty(scene); EditorSceneManager.SaveScene(scene); AssetDatabase.SaveAssets();
+        }
+
+        [MenuItem("QuestLAN/Set up desktop lobby and locomotion")]
+        public static void SetupLobbyAndLocomotionBatch()
+        {
+            var scene = EditorSceneManager.OpenScene("Assets/Scenes/MainScene.unity");
+            var rig = UnityEngine.Object.FindFirstObjectByType<XROrigin>();
+            var binding = UnityEngine.Object.FindFirstObjectByType<XRNetworkBinding>();
+            var move = rig.GetComponent<HeadRelativeLocomotion>();
+            if (!move) move = rig.gameObject.AddComponent<HeadRelativeLocomotion>();
+            move.Configure(rig.transform, rig.Camera.transform, binding);
+            rig.GetComponent<XRHandsPoseSource>().EnableControllerFallback(true);
+            rig.Camera.transform.localPosition = new Vector3(0, 1.6f, 0);
+            binding.GetComponent<LanSessionController>().DesktopControlsVisible = false;
+            PrefabUtility.RecordPrefabInstancePropertyModifications(binding.GetComponent<LanSessionController>());
+            var left = CreateHandPrefab("LeftHandAvatar", -1);
+            var right = CreateHandPrefab("RightHandAvatar", 1);
+            var root = scene.GetRootGameObjects().Single(item => item.name == "Local AvatarRoot");
+            var view = new SerializedObject(root.GetComponent<QuestLAN.Avatar.AvatarPoseView>());
+            foreach (var pair in new[] { ("leftHandVisual", left, "Local Left Hand"), ("rightHandVisual", right, "Local Right Hand") })
+            {
+                var old = view.FindProperty(pair.Item1).objectReferenceValue as Transform;
+                var hand = old && old.name == pair.Item3 ? old.gameObject : (GameObject)PrefabUtility.InstantiatePrefab(pair.Item2, scene);
+                hand.name = pair.Item3; hand.transform.SetParent(root.transform, false);
+                view.FindProperty(pair.Item1).objectReferenceValue = hand.transform;
+                if (old && old.gameObject != hand) UnityEngine.Object.DestroyImmediate(old.gameObject);
+            }
+            view.ApplyModifiedPropertiesWithoutUndo();
+            var product = PrefabUtility.LoadPrefabContents(PlayerPath);
+            try { product.GetComponent<NetworkAvatarPresentation>().ConfigureHands(left, right); PrefabUtility.SaveAsPrefabAsset(product, PlayerPath); }
+            finally { PrefabUtility.UnloadPrefabContents(product); }
+            var official = scene.GetRootGameObjects().SelectMany(item => item.GetComponentsInChildren<Transform>(true)).FirstOrDefault(item => item.name == "Official HandVisualizer");
+            if (official) official.gameObject.SetActive(false);
+            var floor = scene.GetRootGameObjects().First(item => item.name == "Shared Floor");
+            floor.transform.localScale = Vector3.one * 5; // Flat 50m floor; travel is bounded to 20m from spawn.
+            if (!UnityEngine.Object.FindFirstObjectByType<DesktopRoomFlow>()) new GameObject("Desktop Room Flow", typeof(DesktopRoomFlow));
+            EditorSceneManager.MarkSceneDirty(scene); EditorSceneManager.SaveScene(scene);
+            var settings = UnityEditor.XR.Management.XRGeneralSettingsPerBuildTarget.XRGeneralSettingsForBuildTarget(BuildTargetGroup.Standalone);
+            settings.InitManagerOnStart = false;
+            PlayerSettings.SetUseDefaultGraphicsAPIs(BuildTarget.StandaloneWindows64, false);
+            PlayerSettings.SetGraphicsAPIs(BuildTarget.StandaloneWindows64, new[] { UnityEngine.Rendering.GraphicsDeviceType.Direct3D11 });
+            EditorUtility.SetDirty(settings);
+            var lobby = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+            new GameObject("Desktop Room Flow", typeof(DesktopRoomFlow));
+            EditorSceneManager.SaveScene(lobby, "Assets/Scenes/DesktopLobby.unity");
+            EditorBuildSettings.scenes = new[] { new EditorBuildSettingsScene("Assets/Scenes/DesktopLobby.unity", true),
+                new EditorBuildSettingsScene("Assets/Scenes/MainScene.unity", true),
+                new EditorBuildSettingsScene("Assets/NetworkingSandbox/Scenes/LanSandbox.unity", true) };
+            AssetDatabase.SaveAssets();
+            Debug.Log("Desktop lobby, deferred XR, controller hands and head-relative locomotion configured.");
+        }
+
+        private static GameObject CreateHandPrefab(string name, int side)
+        {
+            string path = "Assets/Prefabs/Visual/" + name + ".prefab";
+            var existing = AssetDatabase.LoadAssetAtPath<GameObject>(path);
+            if (existing) return existing;
+            var material = AvatarMaterial("HandsWarm", new Color(0.86f, 0.66f, 0.44f));
+            var hand = new GameObject(name);
+            try
+            {
+                HandPart(hand.transform, "Palm", new Vector3(0, 0, 0.045f), new Vector3(0.075f, 0.026f, 0.09f), Quaternion.identity, material);
+                float[] lengths = { 0.07f, 0.085f, 0.08f, 0.06f };
+                for (int i = 0; i < 4; i++)
+                    HandPart(hand.transform, "Finger " + (i + 1), new Vector3(-0.029f + i * 0.019f, 0, 0.09f + lengths[i] * 0.5f),
+                        new Vector3(0.014f, 0.022f, lengths[i]), Quaternion.identity, material);
+                HandPart(hand.transform, "Thumb", new Vector3(side * 0.052f, -0.005f, 0.045f),
+                    new Vector3(0.022f, 0.023f, 0.055f), Quaternion.Euler(0, side * 45, 0), material);
+                return PrefabUtility.SaveAsPrefabAsset(hand, path);
+            }
+            finally { UnityEngine.Object.DestroyImmediate(hand); }
+        }
+        private static void HandPart(Transform parent, string name, Vector3 position, Vector3 scale, Quaternion rotation, Material material)
+        {
+            var part = GameObject.CreatePrimitive(PrimitiveType.Cube); part.name = name;
+            part.transform.SetParent(parent, false); part.transform.localPosition = position; part.transform.localRotation = rotation; part.transform.localScale = scale;
+            part.GetComponent<Renderer>().sharedMaterial = material; UnityEngine.Object.DestroyImmediate(part.GetComponent<Collider>());
+        }
+
         [MenuItem("QuestLAN/Update head avatar and session controls")]
         public static void UpgradeAvatarAndPanelBatch()
         {

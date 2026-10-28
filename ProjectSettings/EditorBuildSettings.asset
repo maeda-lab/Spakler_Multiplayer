@@ -6,8 +6,14 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
+    path: Assets/Scenes/DesktopLobby.unity
+    guid: 6fdb0757f41e4504d995c3890c8fa4f3
+  - enabled: 1
     path: Assets/Scenes/MainScene.unity
     guid: ec62918f54df4694a9a04e0cb04d5561
+  - enabled: 1
+    path: Assets/NetworkingSandbox/Scenes/LanSandbox.unity
+    guid: 1476c7710daa01746a5959563b12f3ae
   m_configObjects:
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}
     com.unity.xr.management.loader_settings: {fileID: 11400000, guid: 1d10dee5bf51b604eb30578ba0ddc26e, type: 2}

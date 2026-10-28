@@ -60,6 +60,31 @@ namespace QuestLAN.EditorTests
         }
 
         [Test]
+        public void LeftStickMotionUsesHeadYawWithoutPitchOrDiagonalBoost()
+        {
+            var step = HeadRelativeLocomotion.Displacement(Vector2.up, Quaternion.Euler(60, 90, 0), 1.5f, 0.02f);
+            Assert.That(step.x, Is.EqualTo(0.03f).Within(0.0001f));
+            Assert.That(Mathf.Abs(step.y) + Mathf.Abs(step.z), Is.LessThan(0.0001f));
+            Assert.That(HeadRelativeLocomotion.Displacement(new Vector2(1, 1), Quaternion.identity, 1.5f, 0.02f).magnitude,
+                Is.EqualTo(0.03f).Within(0.0001f));
+            Assert.That(HeadRelativeLocomotion.Displacement(new Vector2(0.1f, 0), Quaternion.identity, 1.5f, 0.02f), Is.EqualTo(Vector3.zero));
+            Assert.That(HeadRelativeLocomotion.Displacement(Vector2.up, Quaternion.identity, 1.5f, 9).magnitude, Is.EqualTo(0.075f).Within(0.0001f));
+            var grip = new Pose(new Vector3(2, 1, 0), Quaternion.Euler(0, 90, 0));
+            Assert.That(Vector3.Distance(QuestLAN.XR.XRHandsPoseSource.GripToWrist(grip, new Vector3(0, 0, -0.04f)).position,
+                new Vector3(1.96f, 1, 0)), Is.LessThan(0.0001f));
+        }
+
+        [Test]
+        public void DesktopLobbyIsBootSceneAndHasNoHardwareRig()
+        {
+            Assert.That(UnityEditor.EditorBuildSettings.scenes[0].path, Is.EqualTo("Assets/Scenes/DesktopLobby.unity"));
+            var lobby = EditorSceneManager.OpenScene("Assets/Scenes/DesktopLobby.unity");
+            var objects = lobby.GetRootGameObjects().SelectMany(root => root.GetComponentsInChildren<Transform>(true)).ToArray();
+            Assert.That(objects.Count(item => item.GetComponent<DesktopRoomFlow>()), Is.EqualTo(1));
+            Assert.That(objects.Any(item => item.GetComponent<XROrigin>() || item.GetComponent<NetworkManager>()), Is.False);
+        }
+
+        [Test]
         public void MainSceneHasProductNetworkingAndNoMockHardwareSources()
         {
             Assert.That(UnityEditor.PlayerSettings.Android.forceInternetPermission, Is.True);
@@ -77,6 +102,14 @@ namespace QuestLAN.EditorTests
             Assert.That(player.GetComponent<NetworkAvatarPresentation>().PulseMaterial, Is.Not.Null);
             Assert.That(player.GetComponent<NetworkAvatarPresentation>().PulseMaterial.shader.name, Is.EqualTo("Universal Render Pipeline/Unlit"));
             Assert.That(player.GetComponent<SandboxNetworkAvatar>(), Is.Null);
+            var presentation = player.GetComponent<NetworkAvatarPresentation>();
+            Assert.That(presentation.LeftHandPrefab.GetComponentsInChildren<Renderer>(true).Length, Is.EqualTo(6));
+            Assert.That(presentation.RightHandPrefab.GetComponentsInChildren<Renderer>(true).Length, Is.EqualTo(6));
+            Assert.That(presentation.LeftHandPrefab.transform.Find("Thumb").localPosition.x, Is.LessThan(0));
+            Assert.That(presentation.RightHandPrefab.transform.Find("Thumb").localPosition.x, Is.GreaterThan(0));
+            Assert.That(objects.Count(item => item.GetComponent<HeadRelativeLocomotion>()), Is.EqualTo(1));
+            Assert.That(session.DesktopControlsVisible, Is.False);
+
             var headPrefab = player.GetComponent<NetworkAvatarPresentation>().HeadAvatarPrefab;
             Assert.That(headPrefab, Is.Not.Null);
             Assert.That(headPrefab.GetComponentsInChildren<Renderer>(true).Length, Is.EqualTo(3));

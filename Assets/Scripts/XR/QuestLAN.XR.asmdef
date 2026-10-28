@@ -1,6 +1,6 @@
 {
   "name": "QuestLAN.XR",
   "rootNamespace": "QuestLAN.XR",
-  "references": ["QuestLAN.Shared", "Unity.XR.Hands"],
+  "references": ["QuestLAN.Shared", "Unity.XR.Hands", "Unity.InputSystem", "Unity.XR.OpenXR"],
   "autoReferenced": true
 }

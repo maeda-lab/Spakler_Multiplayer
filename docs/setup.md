@@ -1,5 +1,8 @@
 # 环境配置（更新 2026-10-21）
 
+
+2026-10-28 启动流程更新：Windows 的 Initialize XR on Startup **关闭**，DesktopLobby 为构建首场景；用户通过鼠标/键盘选择 Host/Join 并连接后，由 DesktopRoomFlow 手动初始化 XR。Windows 图形 API 固定 Direct3D11，Android 历史值保留。使用同一新版本的两端，会话协议3；原来的自动XR启动及离线MainScene操作段落是旧流程，不能覆盖当前配置。详见 [桌面大厅与移动](desktop-lobby-locomotion.md)。
+
 当前交付目标为 **Windows x64 + Meta Link**，不要求 Quest Android 原生部署。PCVR 启动、Windows 构建与两 PC 无头显测试步骤见 [pcvr-lan-acceptance](pcvr-lan-acceptance.md)。以下 Android 配置与原生部署段落仅保留历史复现用途，不是当前必做步骤；正常开发不运行双平台重新配置或 Android 构建工具，不删除既有配置。
 
 ## 工程检查
@@ -35,7 +38,7 @@ Meta 目标清单暂未安装或验证：meta-openxr 2.5.0、Meta SDK all 203.0.
 
 1. Hub 打开工程根目录，确认 6000.3.15f1，等待 UPM/编译完成，查看 Console；不要把包安装成功当作设备验证成功。
 2. Edit > Project Settings > Player：Active Input Handling 使用 Input System Package (New)，若弹出重启按提示执行；确认 URP 管线仍有效。
-3. Edit > Project Settings > XR Plug-in Management，在 Standalone 页检查 **OpenXR** 与 Initialize XR on Startup；Android 配置保留历史值，当前无需切换到 Android。
+3. Edit > Project Settings > XR Plug-in Management，在 Standalone 页检查 **OpenXR**；当前桌面大厅流程必须关闭 Initialize XR on Startup；Android 配置保留历史值，当前无需切换到 Android。
 4. XR Plug-in Management > OpenXR：Android 的 Feature Groups/Features 开启当前插件提供的 **Meta Quest Support**，启用 **Hand Tracking**；Standalone 也开启 Hand Tracking。若 Project Validation 要求交互 profile，添加当前 Meta Quest 控制器 profile（如 Oculus Touch Controller Profile）；控制器 profile 本身不启用手指追踪。按安装包实际名称查找，不启用仅针对其他厂商的功能。
 5. XR Plug-in Management > Project Validation，在活动 Windows/Standalone 目标检查 Errors；逐条查看 Fix，不盲目启用额外 SDK。把仍存在的 warnings 及理由记录到 testing。
 6. Package Manager > XR Hands > Samples > HandVisualizer：本次已通过官方 Sample.Import 导入；若未导入或新机器状态不同，点 Import。先打开导入目录下 HandVisualizer.unity 运行官方样例确认 provider 与双手；这一步不需要复制其代码。样例不是网络场景。
@@ -65,7 +68,7 @@ Android 构建工具：固定版本 Editor 以 `-buildTarget Android -executeMet
 USB 接入并在头显确认允许调试后，用 Editor 自带 `SDK/platform-tools/adb.exe devices -l` 检查状态；必须为 `device`，`unauthorized` 需在头显授权。APK 成功后可 `adb install -r <apk>`，再在 Quest 中启动应用，按 testing 表逐项验证。若开发者手动切换到官方 HandVisualizer 场景构建，须先检查 Build Profile Scene List，不能误以为默认 MainScene APK 就是官方样例 APK。
 
 ## Quest 2 Link PCVR 验证
-M3 已通过 Quest 2 / Link 的真实源到独立Host同步、面板显示及头部指向Color实测；操作与证据见 [m3-integration](m3-integration.md)。MainScene未联网时仍提供离线XR。头显内移动头部，把白点对准按钮保持1.2秒；本机色块在面板右侧。M3Headless只用于无硬件进程测试，正常VR应运行M3产品或Editor，不能用关闭XR的测试构建验证头显。
+M3 已通过 Quest 2 / Link 的真实源到独立Host同步、面板显示及头部指向Color实测；操作与证据见 [m3-integration](m3-integration.md)。历史版本 MainScene 未联网时提供离线 XR；当前版本先显示桌面大厅，连接后再启动 XR。头显内移动头部，把白点对准按钮保持1.2秒；本机色块在面板右侧。M3Headless只用于无硬件进程测试，正常VR应运行M3产品或Editor，不能用关闭XR的测试构建验证头显。
 
 可先用现有 Quest 2 的 Link 会话检查 PCVR 启动与头部追踪，结果单独标为 Quest 2 / PCVR。Link 手追踪是否暴露给 XR Hands 要实测；没有有效手帧不能直接推断为代码错误，也不能宣称原生 Quest 3 已通过。
 

@@ -96,6 +96,7 @@ MonoBehaviour:
   - {fileID: 6728067063239029370}
   - {fileID: 5926952007014124917}
   - {fileID: 2621579696041192223}
+  - {fileID: -865187401754149627}
   - {fileID: -4406784349820354920}
   - {fileID: -5228776039703178674}
   - {fileID: -9206068043599847928}
@@ -591,6 +592,28 @@ MonoBehaviour:
   targetOpenXRApiVersion: 
   required: 0
   customRuntimeLoaderName: 
+--- !u!114 &-865187401754149627
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0cd0e003583d8d4429dbb3ff2553df19, type: 3}
+  m_Name: SimultaneousHandsFeature Standalone
+  m_EditorClassIdentifier: QuestLAN.XR::QuestLAN.XR.SimultaneousHandsFeature
+  m_enabled: 1
+  nameUi: QuestLAN simultaneous hands and controllers
+  version: 1.0.0
+  featureIdInternal: questlan.openxr.simultaneous-hands
+  openxrExtensionStrings: XR_META_simultaneous_hands_and_controllers
+  company: QuestLAN
+  priority: 0
+  targetOpenXRApiVersion:
+  required: 0
+  customRuntimeLoaderName:
 --- !u!114 &11400000
 MonoBehaviour:
   m_ObjectHideFlags: 0

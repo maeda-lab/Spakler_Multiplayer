@@ -11,7 +11,7 @@ namespace QuestLAN.Networking
     [RequireComponent(typeof(NetworkManager), typeof(UnityTransport))]
     public sealed class LanSessionController : MonoBehaviour
     {
-        public const ushort SessionProtocolVersion = 2;
+        public const ushort SessionProtocolVersion = 4;
         [SerializeField] private MonoBehaviour localPoseSource;
         [SerializeField] private bool diagnosticLogs = true;
         [SerializeField] private string hostAddress = "127.0.0.1";
@@ -24,6 +24,8 @@ namespace QuestLAN.Networking
         private bool terminalFailure;
         private double connectingSince;
         private bool showStatus = true;
+        [SerializeField] private bool desktopControlsVisible = true;
+        public bool DesktopControlsVisible { get => desktopControlsVisible; set => desktopControlsVisible = value; }
         public string HostAddress { get => hostAddress; set => hostAddress = value; }
         public string PortText { get => portText; set => portText = value; }
         public bool CanStart => manager && !requested && !stopping && !manager.IsListening && !manager.ShutdownInProgress;
@@ -172,6 +174,7 @@ namespace QuestLAN.Networking
 
         private void OnGUI()
         {
+            if (!desktopControlsVisible) return;
             GUILayout.BeginArea(new Rect(12, 12, 400, 410), GUI.skin.box);
             GUILayout.Label("QuestLAN — two-player LAN");
             GUILayout.Label("Status: " + Status);

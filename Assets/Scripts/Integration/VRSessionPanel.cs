@@ -24,6 +24,9 @@ namespace QuestLAN.Integration
         private string inputError;
         public string StatusText => status ? status.text : "";
         private bool editPort;
+        private bool anchored;
+        private Vector3 worldPanelPosition;
+        private Quaternion worldPanelRotation;
         private Control focused;
         private double focusedSince;
         private bool fired;
@@ -80,12 +83,21 @@ namespace QuestLAN.Integration
         private void Update()
         {
             if (!panel || !headCamera) return;
+            bool roomVisible = !DesktopRoomFlow.Instance || DesktopRoomFlow.Instance.RoomEntered;
+            panel.gameObject.SetActive(roomVisible);
+            if (!roomVisible) { focused = null; fired = false; anchored = false; return; }
+            if (!anchored) { anchored = true; worldPanelPosition = panel.position; worldPanelRotation = panel.rotation; }
+            panel.SetPositionAndRotation(worldPanelPosition, worldPanelRotation);
             var signals = manager.IsConnectedClient ? LocalSignals() : null;
             string latency = signals && !manager.IsHost ? signals.Rtt.TimedOut ? "RTT timeout" :
                 signals.Rtt.HasSample ? $"RTT {signals.Rtt.CurrentMilliseconds:F1} / avg {signals.Rtt.SmoothedMilliseconds:F1} ms" : "RTT waiting" : "";
             string color = signals ? $"Your cube (right): {signals.ColorIndex.Value}" : "";
             status.text = $"{session.Status} | Players: {session.PlayerCount}/2 | {session.Role}\nHost IP: {address} | Port: {port}\nHold dot on a button for 1.2s | Edit {(editPort ? "PORT" : "HOST IP")}";
+            status.text += $"\nYour rig: X {rigRoot.position.x:F2}  Z {rigRoot.position.z:F2}";
             if (showDetails) status.text += $"\n{latency} {color}";
+            var skeleton = FindFirstObjectByType<QuestLAN.XR.XRHandsPoseSource>();
+            if (skeleton && skeleton.TryGetLatestHandJoints(out var joints))
+                status.text += "\nJoints L " + CountJoints(joints.LeftValidMask) + "/26 R " + CountJoints(joints.RightValidMask) + "/26 | Simultaneous: " + QuestLAN.XR.SimultaneousHandsFeature.Status;
             if (!string.IsNullOrEmpty(inputError)) status.text += "\n" + inputError;
             foreach (var control in controls)
             {
@@ -123,6 +135,8 @@ namespace QuestLAN.Integration
                 focused.Button.onClick.Invoke();
             }
         }
+
+        private static int CountJoints(uint mask) { int count = 0; while (mask != 0) { count += (int)(mask & 1); mask >>= 1; } return count; }
 
         private Text Label(string label, Transform parent, Vector2 position, Vector2 size, int fontSize)
         {
