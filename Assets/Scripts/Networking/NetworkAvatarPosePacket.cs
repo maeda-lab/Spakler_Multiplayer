@@ -29,7 +29,7 @@ namespace QuestLAN.Networking
             serializer.SerializeValue(ref pose.rotation);
         }
 
-        public bool TryValidate(float maximumDistance = 5f)
+        public bool TryValidate(float maximumDistance = 50f)
         {
             if (Version != ProtocolVersion || double.IsNaN(Frame.LocalCaptureTimeSeconds) ||
                 double.IsInfinity(Frame.LocalCaptureTimeSeconds) || Frame.LocalCaptureTimeSeconds < 0) return false;

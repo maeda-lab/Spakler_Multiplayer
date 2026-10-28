@@ -1,6 +1,6 @@
 # 里程碑与交接
 
-状态：完成 / 部分完成 / 待执行；“实现”与“硬件验证”分开记录。更新日期 2026-10-26。用户明确最终为 Windows PC + Meta Link，取消 Android 原生门槛。当前集成证据以 [m3-integration](m3-integration.md) 为准，下一阶段见 [PCVR/LAN验收](pcvr-lan-acceptance.md)；下面的 2026-10-14 段落保留为历史，不代表当前必做任务。
+状态：完成 / 部分完成 / 待执行；“实现”与“硬件验证”分开记录。更新日期 2026-10-28。用户明确最终为 Windows PC + Meta Link，取消 Android 原生门槛。当前集成证据以 [m3-integration](m3-integration.md) 为准，下一阶段见 [PCVR/LAN验收](pcvr-lan-acceptance.md)；下面的 2026-10-14 段落保留为历史，不代表当前必做任务。
 
 | 任务 | 负责人 | 状态 | 完成条件 | 依赖 |
 | --- | --- | --- | --- | --- |
@@ -16,9 +16,10 @@
 | M4b 双 PC + Meta Link | A+B | 待头显 | 每 PC 一个头显，真实头/双腕、独立失效恢复、事件同步、长时间稳定性；RTT 与显示延迟分别记录 | M4a、两套 Meta Link |
 | M4a 扩展：故障/长时 | A+B | 功能验收收尾；跨PC30分钟故障长测及物理断网/重连通过；Client CSV趋势待核对 | 独立UDP代理有实际丢弃计数；Client正常完成1830秒、连接1829.6秒、32237快照；超时/恢复各1、无姿态/视觉违例；Host资源窗口稳定。最终PlayMode16/16；报告冲突保护实际进程验证通过 | 两PC；补测Client/Host超时隐藏1770/1765次全通过，重连44.84秒；临时规则已清理；见lan-resilience |
 | 头部 Avatar 与英文会话 UI | A+B 集成 | 实现与无硬件回归完成，真实 Link 待验 | 球体/双眼头部、相机排除本机头部、远端显示；Host/Join/Disconnect/Show Status、共享 IP/Port、人数与状态；EditMode7/7、PlayMode18/18 | 用户新增需求；见head-avatar-session-ui |
-| M5 手指骨骼协议 | A+B | 待执行 | 独立 HandJointFrame、关节索引/validity/局部坐标/频率/压缩协商并实测 | M4 稳定 |
+| 桌面大厅、头向移动与IP自动发现 | A+B 集成 | 已实现；大厅与网格下移动用户确认正常；新增IP待用户实测 | 鼠标/数字输入Host/Join后手动启动XR；左摇杆头向平移；本机IPv4填入/可手改 | 见desktop-lobby-locomotion |
+| M5 手指骨骼协议 | A+B | 独立关节契约/骨架/同步及自动验证完成；实机由用户自行执行 | Shared v1.2、会话4；双手26关节、独立有效性、压缩/插值/超时；实际双头显与长测待验 | 见desktop-lobby-locomotion |
 
-## M4a 阶段收尾
+## M4a 阶段收尾（2026-10-22历史状态）
 
 LAN 功能阶段已收尾，实现经 PR #9 合入 main（083fbfd）。当前零头显，M4b 保留待设备，不提前实施 M5。Client 完整 CSV 未回收，资源趋势单独保留待办；不补记无泄漏结论，不影响已通过功能结果。交付包、实际验证、测试清理及恢复顺序见 [M4a 收尾](m4a-closeout.md)。
 
@@ -44,3 +45,10 @@ B 负责 NetworkManager、Host/Client IPv4 直连、NetworkObject 生命周期/O
 A3 受 Quest 3 可用性限制，可在等待设备时推进 B1/B2。M4 双 Quest LAN 和 M5 手指网络协议依次在基础集成稳定后开展；本阶段不提前接 Meta 抓取或传感器。
 
 本轮复现步骤及分层证据见 [xr-acceptance.md](xr-acceptance.md)。工作期间曾切至 B 的 feature/network，按用户确认回到 codex/xr-hands-m0，B 使用另一目录；本轮不合并或修改 B 分支。B 分支提交 b52d8ea 的独立验收结果由 B 交接后更新。
+
+
+## 2026-10-28 追加：IP发现与详细双手骨架
+
+用户已确认Quest 2 + Link下桌面鼠标/数字输入、连接后进入VR及网格下头向摇杆移动正常。当前基于8cac40f的功能分支继续实现IP自动填入与独立关节同步，非main合并结论。
+
+Shared v1.2 / 会话协议4已为A/B集成更新：双方必须同版；实时26关节、压缩独立通道、丢失隐藏/恢复、接收到达时钟插值已实现。EditMode10/10、PlayMode24/24、同机双进程关节同步/手指变化通过，详见desktop-lobby-locomotion.md。下一步为Quest 2持握与空手状态确认；再补两PC/两套Link真实关节、长时资源与网络劣化验收。无有效关节时绝不以固定手模型冒充实时手指。此次通过文档通知B，不发送外部消息。

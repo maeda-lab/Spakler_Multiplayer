@@ -33,7 +33,9 @@ namespace QuestLAN.Integration
 
         private void Update()
         {
-            var player = manager.IsConnectedClient ? manager.LocalClient?.PlayerObject : null;
+            if (!manager || !rig || !source || !localRoot || manager.ShutdownInProgress || !manager.IsConnectedClient)
+            { if (mapped) RestoreLocalMapping(); return; }
+            var player = manager.LocalClient?.PlayerObject;
             var candidate = player ? player.GetComponent<NetworkPoseSync>() : null;
             if (candidate == bound && (candidate || !mapped)) return;
             RestoreLocalMapping();
@@ -43,6 +45,7 @@ namespace QuestLAN.Integration
             bound = candidate; mapped = true;
             session.Configure(source);
             bound.BindLocalSource(source);
+            candidate.GetComponent<NetworkHandJointSync>()?.BindLocalSource(source);
         }
 
         public static void AlignRig(Transform rigTransform, Transform previousRoot, Transform targetRoot)
@@ -66,6 +69,7 @@ namespace QuestLAN.Integration
             if (!session) return;
             session.Configure(null);
             if (bound && bound.IsSpawned && bound.IsOwner) bound.BindLocalSource(null);
+            if (bound && bound.IsSpawned && bound.IsOwner) bound.GetComponent<NetworkHandJointSync>()?.BindLocalSource(null);
             bound = null;
             if (!mapped) return;
             mapped = false;

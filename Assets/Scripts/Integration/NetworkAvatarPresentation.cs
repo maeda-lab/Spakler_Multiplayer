@@ -9,6 +9,10 @@ namespace QuestLAN.Integration
     {
         [SerializeField] private Material pulseMaterial;
         [SerializeField] private GameObject headAvatarPrefab;
+        [SerializeField] private GameObject leftHandPrefab, rightHandPrefab;
+        public GameObject LeftHandPrefab => leftHandPrefab;
+        public GameObject RightHandPrefab => rightHandPrefab;
+        public void ConfigureHands(GameObject left, GameObject right) { leftHandPrefab = left; rightHandPrefab = right; }
         public GameObject HeadAvatarPrefab => headAvatarPrefab;
         public void ConfigureHead(GameObject prefab) => headAvatarPrefab = prefab;
         private GameObject visuals;
@@ -28,9 +32,13 @@ namespace QuestLAN.Integration
                 Marker("Remote head", PrimitiveType.Sphere, new Vector3(0.18f, 0.18f, 0.18f));
             head.name = "Remote head";
             head.gameObject.SetActive(false);
-            var left = Marker("Remote left wrist", PrimitiveType.Cube, new Vector3(0.08f, 0.04f, 0.14f));
-            var right = Marker("Remote right wrist", PrimitiveType.Sphere, Vector3.one * 0.08f);
+            var left = leftHandPrefab ? Instantiate(leftHandPrefab, visuals.transform).transform :
+                Marker("Remote left wrist", PrimitiveType.Cube, new Vector3(0.08f, 0.04f, 0.14f));
+            var right = rightHandPrefab ? Instantiate(rightHandPrefab, visuals.transform).transform :
+                Marker("Remote right wrist", PrimitiveType.Sphere, Vector3.one * 0.08f);
+            left.name = "Remote left wrist"; right.name = "Remote right wrist";
             visuals.AddComponent<AvatarPoseView>().Configure(GetComponent<NetworkPoseSync>(), transform, head, left, right, true);
+            visuals.AddComponent<HandSkeletonView>().Configure(GetComponent<NetworkHandJointSync>(), transform, pulseMaterial, left, right);
             visuals.SetActive(!IsOwner); // Local wrists already have the hardware view; never show an owner head.
             var cube = GameObject.CreatePrimitive(PrimitiveType.Cube);
             cube.name = "Synchronized color";

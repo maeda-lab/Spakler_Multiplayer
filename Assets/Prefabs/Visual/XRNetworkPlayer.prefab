@@ -13,6 +13,7 @@ GameObject:
   - component: {fileID: 3264930195921996426}
   - component: {fileID: 477719758516270185}
   - component: {fileID: 860576391136120453}
+  - component: {fileID: 1317870719281892700}
   m_Layer: 0
   m_Name: XRNetworkPlayer
   m_TagString: Untagged
@@ -104,3 +105,18 @@ MonoBehaviour:
   ShowTopMostFoldoutHeaderGroup: 1
   pulseMaterial: {fileID: 2100000, guid: eec6e76c979e00a4e8c8b85c42a217ce, type: 2}
   headAvatarPrefab: {fileID: 9156949232569701207, guid: c4e068fded3ff7a438a4531ccae8c47c, type: 3}
+  leftHandPrefab: {fileID: 3712539996220642373, guid: 6ccaf1548c68f4140825fa763e31bdc8, type: 3}
+  rightHandPrefab: {fileID: 1285561230840900897, guid: 9d47f1fa4003f4241858e160e6135167, type: 3}
+--- !u!114 &1317870719281892700
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6945969170947623457}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f3b26a8e4fbd6664d8d4b6afc3814270, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: QuestLAN.Networking::QuestLAN.Networking.NetworkHandJointSync
+  ShowTopMostFoldoutHeaderGroup: 1
