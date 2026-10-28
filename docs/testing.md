@@ -1,5 +1,9 @@
 # 验证与实际结果
 
+## 头部与英文连接 UI（2026-10-26）
+
+新增球体双眼头部 Prefab，MainScene 配置本机相机排除 LocalAvatarHead 层，远端使用同一模型。加入英文 Join/Disconnect/Show Status、共享 IP/Port 和实时人数。Unity EditMode7/7、PlayMode18/18；三种 Windows 构建最终均零错误。两种独立进程按钮流程（Client 退出、Host 关闭）通过，双方人数2/2后清零，旧对象/映射清理通过。没有头显，硬件有效样本为0；真实 VR 观感仍待验。使用说明和准确范围见 [头部与连接 UI](head-avatar-session-ui.md)。本轮没有修改 Shared 或网络包格式。
+
 ## 故障与长时验证（2026-10-22，功能阶段收尾）
 
 新增schema2周期JSON/1Hz CSV、Windows原生内存计数、独立UDP故障代理与离线分析。EditMode7/7、完整PlayMode16/16（真实内存计数及输出冲突保留回归）、Python9/9、最终三种Windows构建通过。本机0.2秒断流和带5%丢包/40±20ms延迟的1.5秒断流已实测；前版Mono内存计数为0的问题已修复，不将前版资源结果当通过。跨PC Client最终正常完成1830秒、连接1829.6秒、32237快照，超时后恢复、69次超时隐藏检查全通过、姿态/视觉违例0；Host匹配流量及资源窗口已核对，Client完整CSV待复制分析。物理Wi-Fi补测已通过两端核对：Client正常完成240秒，1770次超时检查全隐藏、姿态/显示违例0，约30秒后连接清理；新Client实际连接44.84秒并恢复同步。Host1765次超时检查全隐藏，记录离开/重入且无残留玩家。重复输出缺陷已修复并有实际进程回归；无效旧报告不计通过。测试Host已结束，本轮临时规则已移除并复核；Client完整CSV资源趋势仍待回收，零头显不补记硬件结果。细节见 [lan-resilience](lan-resilience.md)。

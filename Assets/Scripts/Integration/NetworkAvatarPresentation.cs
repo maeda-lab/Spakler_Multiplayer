@@ -8,6 +8,9 @@ namespace QuestLAN.Integration
     public sealed class NetworkAvatarPresentation : NetworkBehaviour
     {
         [SerializeField] private Material pulseMaterial;
+        [SerializeField] private GameObject headAvatarPrefab;
+        public GameObject HeadAvatarPrefab => headAvatarPrefab;
+        public void ConfigureHead(GameObject prefab) => headAvatarPrefab = prefab;
         private GameObject visuals;
         private Renderer pulse;
         private Material material;
@@ -21,7 +24,10 @@ namespace QuestLAN.Integration
         {
             visuals = new GameObject("Remote pose visuals");
             visuals.transform.SetParent(transform, false);
-            var head = Marker("Remote head", PrimitiveType.Sphere, new Vector3(0.18f, 0.18f, 0.18f));
+            var head = headAvatarPrefab ? Instantiate(headAvatarPrefab, visuals.transform).transform :
+                Marker("Remote head", PrimitiveType.Sphere, new Vector3(0.18f, 0.18f, 0.18f));
+            head.name = "Remote head";
+            head.gameObject.SetActive(false);
             var left = Marker("Remote left wrist", PrimitiveType.Cube, new Vector3(0.08f, 0.04f, 0.14f));
             var right = Marker("Remote right wrist", PrimitiveType.Sphere, Vector3.one * 0.08f);
             visuals.AddComponent<AvatarPoseView>().Configure(GetComponent<NetworkPoseSync>(), transform, head, left, right, true);

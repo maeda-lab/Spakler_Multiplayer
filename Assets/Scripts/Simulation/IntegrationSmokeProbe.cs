@@ -6,6 +6,7 @@ using QuestLAN.XR;
 using Unity.Netcode;
 using Unity.XR.CoreUtils;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace QuestLAN.Simulation
 {
@@ -14,11 +15,12 @@ namespace QuestLAN.Simulation
     {
         [Serializable] private sealed class Report
         {
-            public string role, finalStatus, address, machineName, startedUtc;
-            public int port;
+            public string role, finalStatus, address, machineName, startedUtc, finalUiStatus;
+            public int port, finalPlayerCount;
             public bool connected, mapped, mappingCorrect, oneHardwareRig, sourceBound;
             public bool sawRemote, remoteHasNoRig, remoteInvalid, colorReplicated, rttMeasured;
             public bool mappingCleared, stoppedCleanly;
+            public bool uiControlsUsed, uiDisconnectUsed, sawTwoPlayersInUI, remoteHeadHasEyes;
             public int received, rttSamples;
             public int colorRequests;
             public byte localColorIndex, remoteColorIndex, localRenderedColorIndex;
@@ -34,6 +36,7 @@ namespace QuestLAN.Simulation
         private string path;
         private bool colorRequested, stopping;
         private uint lastSequence;
+        private bool useUI, uiStarted;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         private static void StartRequestedProbe()
@@ -61,8 +64,13 @@ namespace QuestLAN.Simulation
             report.port = port;
             report.machineName = SystemInfo.deviceName;
             report.startedUtc = DateTime.UtcNow.ToString("O");
-            if (report.role == "host") session.StartHost("127.0.0.1", port);
-            else session.StartClient(report.address, port);
+            useUI = Argument(args, "--m3-ui") == "1";
+            session.HostAddress = report.address; session.PortText = port.ToString();
+            if (!useUI)
+            {
+                if (report.role == "host") session.StartHost("127.0.0.1", port);
+                else session.StartClient(report.address, port);
+            }
         }
 
         private void Update()
@@ -72,6 +80,8 @@ namespace QuestLAN.Simulation
             {
                 if (elapsed < duration + 1) return;
                 report.mappingCleared = !binding.IsMapped;
+                report.finalPlayerCount = session.PlayerCount;
+                report.finalUiStatus = GetComponent<VRSessionPanel>().StatusText;
                 report.stoppedCleanly = !manager.IsListening && FindObjectsByType<NetworkPoseSync>(FindObjectsSortMode.None).Length == 0;
                 Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(path)));
                 File.WriteAllText(path, JsonUtility.ToJson(report, true));
@@ -84,6 +94,13 @@ namespace QuestLAN.Simulation
 #endif
                 return;
             }
+            if (useUI && !uiStarted)
+            {
+                if (!ActivateUI(report.role == "host" ? "Host" : "Join")) return;
+                uiStarted = report.uiControlsUsed = true;
+            }
+            var panel = GetComponent<VRSessionPanel>();
+            report.sawTwoPlayersInUI |= session.PlayerCount == 2 && panel && panel.StatusText.Contains("Players: 2/2");
             report.oneHardwareRig = FindObjectsByType<XROrigin>(FindObjectsSortMode.None).Length == 1;
             foreach (var player in FindObjectsByType<NetworkPoseSync>(FindObjectsSortMode.None))
             {
@@ -111,6 +128,8 @@ namespace QuestLAN.Simulation
                 else
                 {
                     report.sawRemote = true;
+                    report.remoteHeadHasEyes |= player.transform.Find("Remote pose visuals/Remote head/Left Eye") &&
+                        player.transform.Find("Remote pose visuals/Remote head/Right Eye");
                     report.remoteHasNoRig = player.GetComponentsInChildren<XROrigin>(true).Length == 0 && player.GetComponentsInChildren<Camera>(true).Length == 0;
                     report.received = Math.Max(report.received, player.ReceivedCount);
                     report.colorReplicated |= signals.ColorIndex.Value == 1;
@@ -132,7 +151,27 @@ namespace QuestLAN.Simulation
             }
             if (elapsed < duration) return;
             report.finalStatus = session.Status;
-            session.Disconnect(); stopping = true;
+            if (useUI && session.CanDisconnect)
+            {
+                report.uiDisconnectUsed = ActivateUI("Disconnect");
+                if (!report.uiDisconnectUsed) throw new InvalidOperationException("Disconnect control missing.");
+            }
+            else session.Disconnect(); // Peer may already have closed the room.
+
+            stopping = true;
+        }
+
+        private bool ActivateUI(string label)
+        {
+            foreach (var canvas in FindObjectsByType<Canvas>(FindObjectsSortMode.None))
+            {
+                if (canvas.name != "LAN gaze panel") continue;
+                var control = canvas.transform.Find(label)?.GetComponent<Button>();
+                if (!control || !control.interactable) return false;
+                control.onClick.Invoke();
+                return true;
+            }
+            return false;
         }
 
         private static string Argument(string[] args, string key)

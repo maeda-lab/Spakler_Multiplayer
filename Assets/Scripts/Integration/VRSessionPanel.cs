@@ -9,7 +9,7 @@ namespace QuestLAN.Integration
     /// <summary>Head-gaze dwell controls usable without controller or hand input bindings.</summary>
     public sealed class VRSessionPanel : MonoBehaviour
     {
-        private sealed class Control { public RectTransform Rect; public Text Text; public System.Action Action; }
+        private sealed class Control { public RectTransform Rect; public Text Text; public Button Button; public System.Func<bool> Available; }
         [SerializeField] private Camera headCamera;
         [SerializeField] private Transform rigRoot;
         private readonly List<Control> controls = new List<Control>();
@@ -18,7 +18,11 @@ namespace QuestLAN.Integration
         private Transform panel;
         private Text status;
         private Image pointer;
-        private string address = "127.0.0.1", port = "7777";
+        private string address { get => session.HostAddress; set => session.HostAddress = value; }
+        private string port { get => session.PortText; set => session.PortText = value; }
+        private bool showDetails;
+        private string inputError;
+        public string StatusText => status ? status.text : "";
         private bool editPort;
         private Control focused;
         private double focusedSince;
@@ -35,14 +39,15 @@ namespace QuestLAN.Integration
             panel.SetParent(rigRoot, false);
             panel.localPosition = new Vector3(0, 1.4f, 2);
             panel.localScale = Vector3.one * 0.001f;
-            ((RectTransform)panel).sizeDelta = new Vector2(1600, 2000);
-            status = Label("Status", panel, new Vector2(0, 370), new Vector2(1600, 240), 36);
-            Button("Host", -0.5f, 0.1f, () => StartSession(true));
-            Button("Client", 0, 0.1f, () => StartSession(false));
-            Button("Stop", 0.5f, 0.1f, () => session.Disconnect());
-            Button("Color", -0.5f, -0.1f, () => LocalSignals()?.RequestColorChange());
+            ((RectTransform)panel).sizeDelta = new Vector2(1600, 2400);
+            status = Label("Status", panel, new Vector2(0, 430), new Vector2(1600, 300), 36);
+            Button("Host", -0.5f, 0.1f, () => StartSession(true), () => session.CanStart);
+            Button("Join", 0, 0.1f, () => StartSession(false), () => session.CanStart);
+            Button("Disconnect", 0.5f, 0.1f, () => session.Disconnect(), () => session.CanDisconnect);
+            Button("Color", -0.5f, -0.1f, () => LocalSignals()?.RequestColorChange(), () => manager.IsConnectedClient);
             Button("IP / Port", 0, -0.1f, () => editPort = !editPort);
             Button("Clear", 0.5f, -0.1f, () => SetEntry(""));
+            Button("Show Status", 0, -1.03f, () => showDetails = true);
             var keys = new[] { "1", "2", "3", "4", "5", "6", "7", "8", "9", ".", "0", "<" };
             for (int i = 0; i < keys.Length; i++)
             {
@@ -61,11 +66,13 @@ namespace QuestLAN.Integration
             pointer.color = Color.white; pointer.raycastTarget = false;
         }
 
-        private void SetEntry(string value) { if (editPort) port = value; else address = value; }
+        private void SetEntry(string value) { inputError = null; if (editPort) port = value; else address = value; }
         private void StartSession(bool host)
         {
-            if (!ushort.TryParse(port, out ushort parsed) || parsed == 0) return;
-            if (host) session.StartHost(address, parsed); else session.StartClient(address, parsed);
+            if (!ushort.TryParse(port, out ushort parsed) || parsed == 0)
+            { inputError = "Enter a UDP port from 1 to 65535."; return; }
+            inputError = null;
+            if (host) session.StartHost("127.0.0.1", parsed); else session.StartClient(address, parsed);
         }
         private NetworkPlayerSignals LocalSignals() => manager.LocalClient?.PlayerObject
             ? manager.LocalClient.PlayerObject.GetComponent<NetworkPlayerSignals>() : null;
@@ -77,7 +84,14 @@ namespace QuestLAN.Integration
             string latency = signals && !manager.IsHost ? signals.Rtt.TimedOut ? "RTT timeout" :
                 signals.Rtt.HasSample ? $"RTT {signals.Rtt.CurrentMilliseconds:F1} / avg {signals.Rtt.SmoothedMilliseconds:F1} ms" : "RTT waiting" : "";
             string color = signals ? $"Your cube (right): {signals.ColorIndex.Value}" : "";
-            status.text = $"{session.Status} | {address}:{port}\nMove head: hold dot on button 1.2s | Edit {(editPort ? "PORT" : "IP")}\n{latency}\n{color}";
+            status.text = $"{session.Status} | Players: {session.PlayerCount}/2 | {session.Role}\nHost IP: {address} | Port: {port}\nHold dot on a button for 1.2s | Edit {(editPort ? "PORT" : "HOST IP")}";
+            if (showDetails) status.text += $"\n{latency} {color}";
+            if (!string.IsNullOrEmpty(inputError)) status.text += "\n" + inputError;
+            foreach (var control in controls)
+            {
+                control.Button.interactable = control.Available == null || control.Available();
+                control.Text.color = control.Button.interactable ? Color.white : Color.gray;
+            }
             Control hit = null;
             pointer.gameObject.SetActive(false);
             var ray = new Ray(headCamera.transform.position, headCamera.transform.forward);
@@ -91,13 +105,12 @@ namespace QuestLAN.Integration
                 foreach (var control in controls)
                 {
                     var local = control.Rect.InverseTransformPoint(world);
-                    if (control.Rect.rect.Contains(new Vector2(local.x, local.y))) { hit = control; break; }
+                    if (control.Button.interactable && control.Rect.rect.Contains(new Vector2(local.x, local.y))) { hit = control; break; }
                 }
             }
             pointer.color = hit == null ? Color.white : Color.yellow;
             if (hit != focused)
             {
-                if (focused != null) focused.Text.color = Color.white;
                 focused = hit; focusedSince = Time.realtimeSinceStartupAsDouble; fired = false;
             }
             if (focused == null) return;
@@ -107,7 +120,7 @@ namespace QuestLAN.Integration
             {
                 fired = true;
                 session.Log("Gaze activated: " + focused.Text.text);
-                focused.Action();
+                focused.Button.onClick.Invoke();
             }
         }
 
@@ -125,7 +138,7 @@ namespace QuestLAN.Integration
             text.color = Color.white; text.raycastTarget = false;
             return text;
         }
-        private void Button(string label, float x, float y, System.Action action)
+        private void Button(string label, float x, float y, System.Action action, System.Func<bool> available = null)
         {
             var background = new GameObject(label, typeof(RectTransform), typeof(Image)).GetComponent<Image>();
             background.transform.SetParent(panel, false);
@@ -135,8 +148,12 @@ namespace QuestLAN.Integration
             background.rectTransform.sizeDelta = new Vector2(440, 140);
             background.color = new Color(0.025f, 0.05f, 0.1f, 0.95f);
             background.raycastTarget = false;
-            controls.Add(new Control { Rect = background.rectTransform,
-                Text = Label(label, background.transform, Vector2.zero, new Vector2(440, 140), 56), Action = action });
+            var button = background.gameObject.AddComponent<Button>();
+            button.targetGraphic = background;
+            button.navigation = new Navigation { mode = Navigation.Mode.None };
+            button.onClick.AddListener(() => { if (available == null || available()) action(); });
+            controls.Add(new Control { Rect = background.rectTransform, Button = button, Available = available,
+                Text = Label(label, background.transform, Vector2.zero, new Vector2(440, 140), 56) });
         }
         private void OnDestroy()
         {
